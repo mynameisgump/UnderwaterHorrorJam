@@ -37,7 +37,7 @@ func _physics_process(delta):
 	
 	velocity = velocity.lerp(Vector3.ZERO, DRAG * delta)
 	
-	velocity.y += BUOYANCY * delta
+	#velocity.y += BUOYANCY * delta
 	velocity.y = clamp(velocity.y, -SPEED, SPEED)
 	
 	move_and_slide()

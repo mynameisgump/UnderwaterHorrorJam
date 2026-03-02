@@ -11,6 +11,12 @@ uv1_scale = Vector3(1000, 1000, 1000)
 material = SubResource("StandardMaterial3D_h2yge")
 size = Vector3(1000, 1, 1000)
 
+[sub_resource type="Environment" id="Environment_0xm2m"]
+tonemap_mode = 3
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.5
+volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
+
 [node name="Main" type="Node3D" unique_id=1956158667]
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
@@ -18,3 +24,11 @@ size = Vector3(1000, 1, 1000)
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1166447620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.166871, 0)
 mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=589827925]
+environment = SubResource("Environment_0xm2m")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=657998322]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+light_color = Color(0, 1, 1, 1)
+light_energy = 12.01
