@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cqow47bch5ocs"]
+
+[ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://player.tscn" id="1_ig7tw"]
+[ext_resource type="Texture2D" uid="uid://b3abclib3b83w" path="res://addons/kenney_prototype_textures/dark/texture_04.png" id="2_0xm2m"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
+albedo_texture = ExtResource("2_0xm2m")
+uv1_scale = Vector3(1000, 1000, 1000)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
+material = SubResource("StandardMaterial3D_h2yge")
+size = Vector3(1000, 1, 1000)
+
+[node name="Main" type="Node3D" unique_id=1956158667]
+
+[node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1166447620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.166871, 0)
+mesh = SubResource("BoxMesh_0xm2m")
