@@ -15,6 +15,10 @@ extends CharacterBody3D
 @export var max_oxygen: float = 100.0
 @export var oxygen_drain: float = 2.0
 
+@onready var oxy_label: Label = $Control/OxyLabel
+@onready var depth_label: Label = $Control/DepthLabel
+
+
 signal oxygen_changed(current: float, maximum: float)
 
 const MOUSE_SENS: float = 0.002
@@ -23,6 +27,10 @@ var current_oxygen: float
 var _dash_timer: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
+
+func _process(delta: float) -> void:
+	oxy_label.text = str(current_oxygen);
+	depth_label.text = str(global_position.y)
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -96,3 +104,7 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.normalized() * swim_speed
 
 	move_and_slide()
+
+
+func get_depth(delta: float) -> float:
+	return global_position.y

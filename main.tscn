@@ -1,7 +1,10 @@
 [gd_scene format=3 uid="uid://cqow47bch5ocs"]
 
+[ext_resource type="Script" uid="uid://bempvqvskvxb7" path="res://main.gd" id="1_h2yge"]
 [ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://player.tscn" id="1_ig7tw"]
 [ext_resource type="Texture2D" uid="uid://b3abclib3b83w" path="res://addons/kenney_prototype_textures/dark/texture_04.png" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://cdfyqopqwscdq" path="res://wader.tscn" id="4_1bvp3"]
+[ext_resource type="Shader" uid="uid://gqejhps55qt6" path="res://fog.gdshader" id="5_lquwl"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
 albedo_texture = ExtResource("2_0xm2m")
@@ -11,13 +14,19 @@ uv1_scale = Vector3(1000, 1000, 1000)
 material = SubResource("StandardMaterial3D_h2yge")
 size = Vector3(1000, 1, 1000)
 
-[sub_resource type="Environment" id="Environment_0xm2m"]
+[sub_resource type="Environment" id="Environment_1bvp3"]
 tonemap_mode = 3
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.5
+volumetric_fog_density = 0.0
 volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7mycd"]
+shader = ExtResource("5_lquwl")
+shader_parameter/max_depth = 100.0
+shader_parameter/fog_color = Color(0.02, 0.08, 0.15, 1)
+
 [node name="Main" type="Node3D" unique_id=1956158667]
+script = ExtResource("1_h2yge")
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
 
@@ -26,9 +35,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.166871, 0)
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=589827925]
-environment = SubResource("Environment_0xm2m")
+environment = SubResource("Environment_1bvp3")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=657998322]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 light_color = Color(0, 1, 1, 1)
 light_energy = 12.01
+
+[node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0)
+
+[node name="FogVolume" type="FogVolume" parent="." unique_id=1539446922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
+size = Vector3(1000, 100, 1000)
+material = SubResource("ShaderMaterial_7mycd")
