@@ -1,20 +1,32 @@
 extends CharacterBody3D
 
+@export_group("Swimming")
 @export var swim_speed: float = 5.0
 @export var acceleration: float = 20.0
 @export var drag: float = 4.0
 @export var buoyancy: float = 0.5
+
+@export_group("Dash")
 @export var dash_impulse: float = 15.0
 @export var dash_cooldown: float = 1.0
+@export var dash_oxygen_cost: float = 15.0
+
+@export_group("Oxygen")
+@export var max_oxygen: float = 100.0
+@export var oxygen_drain: float = 2.0
+
+signal oxygen_changed(current: float, maximum: float)
 
 const MOUSE_SENS: float = 0.002
 
+var current_oxygen: float
 var _dash_timer: float = 0.0
 
 @onready var camera: Camera3D = $Camera3D
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	current_oxygen = max_oxygen
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -25,7 +37,7 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
-	if event.is_action_pressed("dash") and _dash_timer <= 0.0:
+	if event.is_action_pressed("dash") and _dash_timer <= 0.0 and current_oxygen >= dash_oxygen_cost:
 		_dash()
 
 func _dash() -> void:
@@ -46,10 +58,18 @@ func _dash() -> void:
 
 	velocity = dash_dir.normalized() * dash_impulse
 	_dash_timer = dash_cooldown
+	_consume_oxygen(dash_oxygen_cost)
+
+func _consume_oxygen(amount: float) -> void:
+	current_oxygen = maxf(current_oxygen - amount, 0.0)
+	oxygen_changed.emit(current_oxygen, max_oxygen)
 
 func _physics_process(delta: float) -> void:
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
+
+	current_oxygen = maxf(current_oxygen - oxygen_drain * delta, 0.0)
+	oxygen_changed.emit(current_oxygen, max_oxygen)
 
 	var input_dir: Vector2 = Input.get_vector("move_l", "move_r", "move_f", "move_b")
 
