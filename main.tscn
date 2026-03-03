@@ -4,7 +4,6 @@
 [ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://player.tscn" id="1_ig7tw"]
 [ext_resource type="Texture2D" uid="uid://b3abclib3b83w" path="res://addons/kenney_prototype_textures/dark/texture_04.png" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://cdfyqopqwscdq" path="res://wader.tscn" id="4_1bvp3"]
-[ext_resource type="Shader" uid="uid://gqejhps55qt6" path="res://fog.gdshader" id="5_lquwl"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
 albedo_texture = ExtResource("2_0xm2m")
@@ -15,18 +14,22 @@ material = SubResource("StandardMaterial3D_h2yge")
 size = Vector3(1000, 1, 1000)
 
 [sub_resource type="Environment" id="Environment_1bvp3"]
+background_mode = 1
+background_color = Color(0.585062, 0.585062, 0.5850621, 1)
 tonemap_mode = 3
-volumetric_fog_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.007843138, 0.050980393, 0.101960786, 1)
+fog_height = -1024.0
+fog_height_density = 16.0
 volumetric_fog_density = 0.0
 volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7mycd"]
-shader = ExtResource("5_lquwl")
-shader_parameter/max_depth = 100.0
-shader_parameter/fog_color = Color(0.02, 0.08, 0.15, 1)
+adjustment_enabled = true
 
 [node name="Main" type="Node3D" unique_id=1956158667]
 script = ExtResource("1_h2yge")
+ior_far = 6.0
+ior_dist_max = 200.0
+ior_dist_min = 5.0
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
 
@@ -43,9 +46,4 @@ light_color = Color(0, 1, 1, 1)
 light_energy = 12.01
 
 [node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0)
-
-[node name="FogVolume" type="FogVolume" parent="." unique_id=1539446922]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
-size = Vector3(1000, 100, 1000)
-material = SubResource("ShaderMaterial_7mycd")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 200, 0)

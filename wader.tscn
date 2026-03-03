@@ -5,8 +5,8 @@
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_7v1x1"]
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_pjkg7"]
-width = 1024
-height = 1024
+width = 2048
+height = 2048
 noise = SubResource("FastNoiseLite_7v1x1")
 seamless = true
 as_normal_map = true
@@ -16,11 +16,14 @@ render_priority = 0
 shader = ExtResource("1_7v1x1")
 shader_parameter/normal_map_texture = SubResource("NoiseTexture2D_pjkg7")
 shader_parameter/water_color = Color(0.0625, 0.1992, 0.3594, 1)
-shader_parameter/index_of_refraction = 2.593
+shader_parameter/index_of_refraction = 1.873
+shader_parameter/wave_scale = -0.008
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_l1tt4"]
 material = SubResource("ShaderMaterial_pjkg7")
 size = Vector2(1000, 1000)
+subdivide_width = 4
+subdivide_depth = 4
 
 [node name="Wader" type="Node3D" unique_id=745295253]
 

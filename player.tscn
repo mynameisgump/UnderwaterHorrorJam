@@ -1,11 +1,14 @@
 [gd_scene format=3 uid="uid://ckudr8chj1kgo"]
 
 [ext_resource type="Script" uid="uid://b0gd8hrqpvtbb" path="res://player.gd" id="1_4flbx"]
+[ext_resource type="PackedScene" uid="uid://cfpw6fvta6bkx" path="res://bubble_particles.tscn" id="2_onrkg"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
+swim_speed = 300.0
+acceleration = 200.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=255034913]
 shape = SubResource("CapsuleShape3D_sh265")
@@ -38,3 +41,5 @@ offset_right = 45.0
 offset_bottom = 137.0
 theme_override_font_sizes/font_size = 50
 text = "Testing"
+
+[node name="BubbleParticles" parent="." unique_id=1091126741 instance=ExtResource("2_onrkg")]

@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dincbfj6qen6b"]
+
+[ext_resource type="Shader" uid="uid://gqejhps55qt6" path="res://fog.gdshader" id="1_pippe"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ufh25"]
+shader = ExtResource("1_pippe")
+shader_parameter/surface_y = 150.0
+shader_parameter/max_depth = 100.0
+shader_parameter/fog_color = Color(0.02, 0.08, 0.15, 1)
+shader_parameter/player_pos = Vector3(0, 0, 0)
+shader_parameter/tunnel_radius = 100.0000047025
+shader_parameter/tunnel_softness = 1.0
+shader_parameter/density_multiplier = 1.0
+
+[node name="Temp" type="Node3D" unique_id=1397447561]
+
+[node name="FogVolume" type="FogVolume" parent="." unique_id=1046778239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0)
+visible = false
+size = Vector3(1000, 200, 1000)
+material = SubResource("ShaderMaterial_ufh25")
