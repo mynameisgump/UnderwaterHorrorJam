@@ -8,6 +8,8 @@
 
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
+swim_speed = 30.0
+acceleration = 5000.0
 safe_ascent_limit = 30.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=255034913]

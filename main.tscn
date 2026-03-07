@@ -3,7 +3,31 @@
 [ext_resource type="Script" uid="uid://bempvqvskvxb7" path="res://main.gd" id="1_h2yge"]
 [ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://player.tscn" id="1_ig7tw"]
 [ext_resource type="Texture2D" uid="uid://b3abclib3b83w" path="res://addons/kenney_prototype_textures/dark/texture_04.png" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://bcikgc1xip6lm" path="res://zone_data.gd" id="2_lquwl"]
 [ext_resource type="PackedScene" uid="uid://cdfyqopqwscdq" path="res://wader.tscn" id="4_1bvp3"]
+
+[sub_resource type="Resource" id="Resource_7mycd"]
+script = ExtResource("2_lquwl")
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
+
+[sub_resource type="Resource" id="Resource_272bh"]
+script = ExtResource("2_lquwl")
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
+
+[sub_resource type="Resource" id="Resource_5vw27"]
+script = ExtResource("2_lquwl")
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
+
+[sub_resource type="Resource" id="Resource_kek77"]
+script = ExtResource("2_lquwl")
+floor_light_color = Color(0.9882353, 0, 0.09019608, 1)
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
+
+[sub_resource type="Resource" id="Resource_4c57u"]
+script = ExtResource("2_lquwl")
+ceiling_light_color = Color(0.988527, 0, 0.09073525, 1)
+floor_light_color = Color(0, 0, 0, 1)
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
 albedo_texture = ExtResource("2_0xm2m")
@@ -31,8 +55,10 @@ script = ExtResource("1_h2yge")
 ior_far = 6.0
 ior_dist_max = 200.0
 ior_dist_min = 5.0
+zones = Array[ExtResource("2_lquwl")]([SubResource("Resource_7mycd"), SubResource("Resource_272bh"), SubResource("Resource_5vw27"), SubResource("Resource_kek77"), SubResource("Resource_4c57u")])
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
+oxygen_drain = 1.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1166447620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.166871, 0)
@@ -41,10 +67,17 @@ mesh = SubResource("BoxMesh_0xm2m")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=589827925]
 environment = SubResource("Environment_1bvp3")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=657998322]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+[node name="CeilingLight" type="DirectionalLight3D" parent="." unique_id=657998322]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 12.983297, 0)
 light_color = Color(0, 1, 1, 1)
-light_volumetric_fog_energy = 0.0
+light_energy = 7.0
+light_volumetric_fog_energy = 5.386
+
+[node name="FloorLight" type="DirectionalLight3D" parent="." unique_id=1052748979]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 5.4008017, 0)
+light_color = Color(0, 1, 0.39215687, 1)
+light_energy = 7.0
+light_volumetric_fog_energy = 16.0
 
 [node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 500, 0)
