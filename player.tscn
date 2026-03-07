@@ -3,8 +3,22 @@
 [ext_resource type="Script" uid="uid://b0gd8hrqpvtbb" path="res://player.gd" id="1_4flbx"]
 [ext_resource type="PackedScene" uid="uid://cfpw6fvta6bkx" path="res://bubble_particles.tscn" id="2_onrkg"]
 [ext_resource type="Script" uid="uid://bnjyhyvh8ls64" path="res://depth_meter.gd" id="3_dpmtr"]
+[ext_resource type="Shader" uid="uid://71j086wt5abv" path="res://PSX_Horror.gdshader" id="3_hqtel"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sweqy"]
+shader = ExtResource("3_hqtel")
+shader_parameter/pixel_resolution = 512.0
+shader_parameter/color_steps = 32
+shader_parameter/noise_strength = 0.1
+shader_parameter/enable_dither = true
+shader_parameter/dither_strength = 0.3
+shader_parameter/enable_glow = true
+shader_parameter/glow_strength = 0.4
+shader_parameter/glow_spread = 0.005
+shader_parameter/enable_vintage = true
+shader_parameter/vintage_strength = 0.8
 
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
@@ -32,6 +46,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="ColorRect" type="ColorRect" parent="Control" unique_id=314626386]
+material = SubResource("ShaderMaterial_sweqy")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="OxyLabel" type="Label" parent="Control" unique_id=206372196]
 layout_mode = 0
