@@ -1,13 +1,34 @@
 [gd_scene format=3 uid="uid://ckudr8chj1kgo"]
 
 [ext_resource type="Script" uid="uid://b0gd8hrqpvtbb" path="res://player.gd" id="1_4flbx"]
+[ext_resource type="Shader" uid="uid://dfk5a8bd7i5f2" path="res://psx_fog.gdshader" id="2_i3pqv"]
 [ext_resource type="PackedScene" uid="uid://cfpw6fvta6bkx" path="res://bubble_particles.tscn" id="2_onrkg"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hqtel"]
+render_priority = 0
+shader = ExtResource("2_i3pqv")
+shader_parameter/enable_fog = true
+shader_parameter/fog_color = Color(0, 0, 0, 1)
+shader_parameter/noise_color = Color(0, 0, 0, 1)
+shader_parameter/fog_distance = 100.0
+shader_parameter/fog_fade_range = 50.0
+shader_parameter/enable_noise = true
+shader_parameter/noise_time_fac = 4.0
+shader_parameter/enable_color_limitation = true
+shader_parameter/color_levels = 32
+shader_parameter/enable_dithering = true
+shader_parameter/dither_strength = 0.3
+
+[sub_resource type="QuadMesh" id="QuadMesh_sweqy"]
+material = SubResource("ShaderMaterial_hqtel")
+flip_faces = true
+size = Vector2(2, 2)
+
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
-swim_speed = 300.0
+swim_speed = 100.0
 acceleration = 200.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=255034913]
@@ -19,6 +40,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52273333, 0)
 [node name="SpotLight3D" type="SpotLight3D" parent="Camera3D" unique_id=1987938989]
 spot_range = 100.0
 spot_angle = 62.82
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Camera3D" unique_id=1370496369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.74994963)
+visible = false
+mesh = SubResource("QuadMesh_sweqy")
 
 [node name="Control" type="Control" parent="." unique_id=844650005]
 layout_mode = 3

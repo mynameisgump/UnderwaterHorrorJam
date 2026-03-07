@@ -16,8 +16,13 @@ render_priority = 0
 shader = ExtResource("1_7v1x1")
 shader_parameter/normal_map_texture = SubResource("NoiseTexture2D_pjkg7")
 shader_parameter/water_color = Color(0.0625, 0.1992, 0.3594, 1)
+shader_parameter/custom_sky_color = Color(0.4, 0.7, 1, 1)
+shader_parameter/sky_brightness = 1.0
+shader_parameter/fog_color = Color(0.05, 0.15, 0.25, 1)
+shader_parameter/fog_density = 0.0
+shader_parameter/fog_aerial_perspective = 1.0
 shader_parameter/index_of_refraction = 1.873
-shader_parameter/wave_scale = -0.008
+shader_parameter/wave_scale = 0.002
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_l1tt4"]
 material = SubResource("ShaderMaterial_pjkg7")

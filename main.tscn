@@ -7,23 +7,24 @@
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
 albedo_texture = ExtResource("2_0xm2m")
-uv1_scale = Vector3(1000, 1000, 1000)
+uv1_scale = Vector3(10000, 10000, 10000)
 
 [sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
 material = SubResource("StandardMaterial3D_h2yge")
-size = Vector3(1000, 1, 1000)
+size = Vector3(10000, 1, 10000)
 
 [sub_resource type="Environment" id="Environment_1bvp3"]
-background_mode = 1
-background_color = Color(0.585062, 0.585062, 0.5850621, 1)
 tonemap_mode = 3
-fog_enabled = true
+fog_mode = 1
 fog_light_color = Color(0.007843138, 0.050980393, 0.101960786, 1)
-fog_height = -1024.0
-fog_height_density = 16.0
-volumetric_fog_density = 0.0
+fog_light_energy = 8.84
+fog_sun_scatter = 0.09
+fog_density = 0.8557
+fog_height_density = -9.0722
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.0809
 volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
-adjustment_enabled = true
+volumetric_fog_anisotropy = 0.42
 
 [node name="Main" type="Node3D" unique_id=1956158667]
 script = ExtResource("1_h2yge")
@@ -43,7 +44,7 @@ environment = SubResource("Environment_1bvp3")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=657998322]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 light_color = Color(0, 1, 1, 1)
-light_energy = 12.01
+light_energy = 5.911
 
 [node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 200, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 500, 0)
