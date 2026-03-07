@@ -22,8 +22,8 @@ shader_parameter/vintage_strength = 0.8
 
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
-swim_speed = 50.0
-acceleration = 500.0
+swim_speed = 25.0
+acceleration = 200.0
 acclimation_rate = 2.5
 safe_descent_limit = 15.0
 

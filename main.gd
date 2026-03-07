@@ -65,7 +65,7 @@ func _input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	var dist_to_surface := wader.global_position.y - player.global_position.y
 	var t := clampf((dist_to_surface - ior_dist_min) / (ior_dist_max - ior_dist_min), 0.0, 1.0)
-	water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, t))
+	#water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, t))
 	_update_zone()
 
 func _update_zone() -> void:

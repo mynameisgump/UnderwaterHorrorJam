@@ -46,18 +46,15 @@ void fragment() {
     float fog_amount = 1.0 - exp(-vertex_dist * fog_density);
     fog_amount = clamp(fog_amount, 0.0, 1.0);
 
-    if(!FRONT_FACING) {
-        // Apply fog to the water color, but NOT to the sky color
-        vec3 fogged_water = mix(water_color, fog_color, fog_amount);
+    vec3 fogged_water = mix(water_color, fog_color, fog_amount);
+
+    if (!FRONT_FACING) {
+        // Underwater view: Snell's window — sky visible through the cone above
         vec3 final_sky = custom_sky_color * sky_brightness;
-        
-        // Inside the window = Sky, Outside = Fogged Water
         ALBEDO = mix(fogged_water, final_sky, mask);
-        
-        // Use Emission for the sky so it "glows" through the fog
         EMISSION = mix(vec3(0.0), final_sky * 0.5, mask);
     } else {
-        // Top side logic (reflection of sky)
-        ALBEDO = mix(custom_sky_color, fog_color, fog_amount);
+        // Above water view: dark water surface fading into fog
+        ALBEDO = fogged_water;
     }
 }
