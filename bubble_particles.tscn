@@ -8,7 +8,10 @@ gravity = Vector3(0, 1, 0)
 linear_accel_min = -2.2351742e-06
 linear_accel_max = -2.2351742e-06
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_guquq"]
+
 [sub_resource type="SphereMesh" id="SphereMesh_guquq"]
+material = SubResource("StandardMaterial3D_guquq")
 radial_segments = 16
 rings = 8
 

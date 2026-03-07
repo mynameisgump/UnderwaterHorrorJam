@@ -1,35 +1,14 @@
 [gd_scene format=3 uid="uid://ckudr8chj1kgo"]
 
 [ext_resource type="Script" uid="uid://b0gd8hrqpvtbb" path="res://player.gd" id="1_4flbx"]
-[ext_resource type="Shader" uid="uid://dfk5a8bd7i5f2" path="res://psx_fog.gdshader" id="2_i3pqv"]
 [ext_resource type="PackedScene" uid="uid://cfpw6fvta6bkx" path="res://bubble_particles.tscn" id="2_onrkg"]
+[ext_resource type="Script" uid="uid://bnjyhyvh8ls64" path="res://depth_meter.gd" id="3_dpmtr"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hqtel"]
-render_priority = 0
-shader = ExtResource("2_i3pqv")
-shader_parameter/enable_fog = true
-shader_parameter/fog_color = Color(0, 0, 0, 1)
-shader_parameter/noise_color = Color(0, 0, 0, 1)
-shader_parameter/fog_distance = 100.0
-shader_parameter/fog_fade_range = 50.0
-shader_parameter/enable_noise = true
-shader_parameter/noise_time_fac = 4.0
-shader_parameter/enable_color_limitation = true
-shader_parameter/color_levels = 32
-shader_parameter/enable_dithering = true
-shader_parameter/dither_strength = 0.3
-
-[sub_resource type="QuadMesh" id="QuadMesh_sweqy"]
-material = SubResource("ShaderMaterial_hqtel")
-flip_faces = true
-size = Vector2(2, 2)
-
 [node name="Player" type="CharacterBody3D" unique_id=613900863]
 script = ExtResource("1_4flbx")
-swim_speed = 100.0
-acceleration = 200.0
+safe_ascent_limit = 30.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=255034913]
 shape = SubResource("CapsuleShape3D_sh265")
@@ -38,34 +17,42 @@ shape = SubResource("CapsuleShape3D_sh265")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52273333, 0)
 
 [node name="SpotLight3D" type="SpotLight3D" parent="Camera3D" unique_id=1987938989]
-spot_range = 100.0
-spot_angle = 62.82
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Camera3D" unique_id=1370496369]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.74994963)
-visible = false
-mesh = SubResource("QuadMesh_sweqy")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3622061, -0.26471272)
+light_energy = 8.05
+light_volumetric_fog_energy = 10.664
+spot_range = 157.294
+spot_angle = 18.27
 
 [node name="Control" type="Control" parent="." unique_id=844650005]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="OxyLabel" type="Label" parent="Control" unique_id=206372196]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-theme_override_font_sizes/font_size = 40
-text = "Oxygen Level"
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 260.0
+offset_bottom = 48.0
+theme_override_font_sizes/font_size = 24
+text = "O2  100%"
 
-[node name="DepthLabel" type="Label" parent="Control" unique_id=1748224858]
-layout_mode = 0
-offset_left = 5.0
-offset_top = 68.0
-offset_right = 45.0
-offset_bottom = 137.0
-theme_override_font_sizes/font_size = 50
-text = "Testing"
+[node name="DepthMeter" type="Control" parent="Control" unique_id=900000001]
+custom_minimum_size = Vector2(200, 400)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 16.0
+offset_bottom = 416.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("3_dpmtr")
+metadata/_edit_use_anchors_ = true
 
 [node name="BubbleParticles" parent="." unique_id=1091126741 instance=ExtResource("2_onrkg")]

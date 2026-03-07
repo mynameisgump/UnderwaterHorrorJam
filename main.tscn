@@ -44,7 +44,7 @@ environment = SubResource("Environment_1bvp3")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=657998322]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 light_color = Color(0, 1, 1, 1)
-light_energy = 5.911
+light_volumetric_fog_energy = 0.0
 
 [node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 500, 0)
