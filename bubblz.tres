@@ -5,11 +5,11 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bubble"]
 render_priority = 0
 shader = ExtResource("1_w8n6q")
-shader_parameter/fresnel_power = 3.0
-shader_parameter/fresnel_strength = 0.6
+shader_parameter/fresnel_power = 2.0000000475
+shader_parameter/fresnel_strength = 0.800000038
 shader_parameter/bubble_color = Color(0.7, 0.88, 1, 1)
 
 [resource]
 material = SubResource("ShaderMaterial_bubble")
-radial_segments = 16
-rings = 8
+radial_segments = 8
+rings = 4
