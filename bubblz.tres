@@ -1,0 +1,15 @@
+[gd_resource type="SphereMesh" format=3 uid="uid://cosrp0714bx4k"]
+
+[ext_resource type="Shader" uid="uid://bfdm23bwt341u" path="res://bubble_fresnel.gdshader" id="1_w8n6q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bubble"]
+render_priority = 0
+shader = ExtResource("1_w8n6q")
+shader_parameter/fresnel_power = 3.0
+shader_parameter/fresnel_strength = 0.6
+shader_parameter/bubble_color = Color(0.7, 0.88, 1, 1)
+
+[resource]
+material = SubResource("ShaderMaterial_bubble")
+radial_segments = 16
+rings = 8

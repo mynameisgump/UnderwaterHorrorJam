@@ -47,6 +47,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="ColorRect" type="ColorRect" parent="Control" unique_id=314626386]
+visible = false
 material = SubResource("ShaderMaterial_sweqy")
 layout_mode = 1
 anchors_preset = 15

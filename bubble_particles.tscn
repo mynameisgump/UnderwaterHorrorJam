@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://cfpw6fvta6bkx"]
 
+[ext_resource type="SphereMesh" uid="uid://cosrp0714bx4k" path="res://bubblz.tres" id="1_5kdv6"]
+
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_guquq"]
 emission_shape = 3
 emission_box_extents = Vector3(100, 100, 100)
@@ -8,19 +10,10 @@ gravity = Vector3(0, 1, 0)
 linear_accel_min = -2.2351742e-06
 linear_accel_max = -2.2351742e-06
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_guquq"]
-transparency = 4
-albedo_color = Color(1, 1, 1, 0.15686275)
-
-[sub_resource type="SphereMesh" id="SphereMesh_guquq"]
-material = SubResource("StandardMaterial3D_guquq")
-radial_segments = 16
-rings = 8
-
 [node name="BubbleParticles" type="Node3D" unique_id=1091126741]
 
 [node name="GPUParticles3D" type="GPUParticles3D" parent="." unique_id=656962684]
 amount = 1000
 lifetime = 15.0
 process_material = SubResource("ParticleProcessMaterial_guquq")
-draw_pass_1 = SubResource("SphereMesh_guquq")
+draw_pass_1 = ExtResource("1_5kdv6")
