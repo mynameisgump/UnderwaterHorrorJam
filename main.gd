@@ -63,10 +63,12 @@ func _update_zone() -> void:
 
 	var depth := maxf(player.get_depth(), 0.0)
 	var progress := depth / zone_size
+	print(progress)
 	var idx := int(progress)
 	var blend := progress - float(idx)
 
 	idx = clampi(idx, 0, zones.size() - 1)
+	print(idx)
 	var next_idx := mini(idx + 1, zones.size() - 1)
 	if idx >= zones.size() - 1:
 		blend = 0.0
@@ -74,8 +76,8 @@ func _update_zone() -> void:
 	var cur: ZoneData = zones[idx]
 	var nxt: ZoneData = zones[next_idx]
 
-	var ceiling_t := clampf(blend * 2.0, 0.0, 1.0)
-	var floor_t := clampf(blend * 2.0 - 1.0, 0.0, 1.0)
+	var floor_t := clampf(blend * 2.0, 0.0, 1.0)
+	var ceiling_t := clampf(blend * 2.0 - 1.0, 0.0, 1.0)
 
 	ceiling_light.light_color = cur.color.lerp(nxt.color, ceiling_t)
 	ceiling_light.light_energy = lerpf(cur.energy, nxt.energy, ceiling_t)
