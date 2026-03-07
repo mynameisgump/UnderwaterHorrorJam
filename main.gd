@@ -1,5 +1,7 @@
 extends Node3D
 
+const OxygenTankScene: PackedScene = preload("res://oxygen_tank.tscn")
+
 @onready var wader: Node3D = $Wader
 @onready var player: PlayerController = $Player
 @onready var water_mat: ShaderMaterial = $Wader/MeshInstance3D.get_surface_override_material(0) if $Wader/MeshInstance3D.get_surface_override_material(0) else $Wader/MeshInstance3D.mesh.material
@@ -50,6 +52,15 @@ func _build_default_zones() -> void:
 	z4.volumetric_energy = 2.0
 
 	zones = [z0, z1, z2, z3, z4]
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("spawn_debug_tank"):
+		var tank := OxygenTankScene.instantiate()
+		var angle := randf() * TAU
+		var dist := randf_range(5.0, 20.0)
+		var offset := Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
+		tank.global_position = player.global_position + offset
+		add_child(tank)
 
 func _process(_delta: float) -> void:
 	var dist_to_surface := wader.global_position.y - player.global_position.y

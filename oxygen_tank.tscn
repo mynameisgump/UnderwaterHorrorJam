@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://do2tank00001"]
+
+[ext_resource type="Script" uid="uid://cf8otmgwmc4qe" path="res://oxygen_tank.gd" id="1_script"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.4, 0.4, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="Material_1"]
+albedo_color = Color(0.25, 0.25, 0.25, 1)
+emission_enabled = true
+emission = Color(1, 0, 0, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_1"]
+size = Vector3(0.4, 0.4, 0.4)
+
+[node name="OxygenTank" type="Area3D" unique_id=636382162]
+collision_layer = 2
+script = ExtResource("1_script")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2113277389]
+mesh = SubResource("BoxMesh_1")
+surface_material_override/0 = SubResource("Material_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1260262084]
+shape = SubResource("BoxShape_1")
+
+[node name="BlinkLight" type="OmniLight3D" parent="." unique_id=68458518]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+light_color = Color(1, 0.4, 0.1, 1)
+light_energy = 13.398
+light_volumetric_fog_energy = 16.0
+omni_range = 200.0

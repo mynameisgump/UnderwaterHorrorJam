@@ -110,6 +110,10 @@ func _consume_oxygen(amount: float) -> void:
 	current_oxygen = maxf(current_oxygen - amount, 0.0)
 	oxygen_changed.emit(current_oxygen, max_oxygen)
 
+func add_oxygen(amount: float) -> void:
+	current_oxygen = minf(current_oxygen + amount, max_oxygen)
+	oxygen_changed.emit(current_oxygen, max_oxygen)
+
 func _physics_process(delta: float) -> void:
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
