@@ -40,6 +40,7 @@ var _at_bends_risk: bool = false
 @onready var camera: Camera3D = $Camera3D
 @onready var oxy_label: Label = $Control/OxyLabel
 @onready var depth_meter: DepthMeterUI = $Control/DepthMeter
+@onready var flashlight: SpotLight3D = $Camera3D/Flashlight
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -135,6 +136,9 @@ func _physics_process(delta: float) -> void:
 		wish_dir.y += 1.0
 	if Input.is_action_pressed("move_d"):
 		wish_dir.y -= 1.0
+	if Input.is_action_just_pressed("enable_flash"):
+		flashlight.visible = not flashlight.visible
+		pass
 
 	if wish_dir.length() > 1.0:
 		wish_dir = wish_dir.normalized()
