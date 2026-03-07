@@ -21,49 +21,33 @@ func _ready() -> void:
 	player.surface_node = wader
 	player.initialize_depth()
 	if zones.is_empty():
-		print("Making")
 		_build_default_zones()
 
 func _build_default_zones() -> void:
 	var z0 := ZoneData.new()
-	z0.ceiling_light_color = Color(0.0, 1.0, 1.0)
-	z0.ceiling_light_energy = 7.0
-	z0.ceiling_volumetric_energy = 5.4
-	z0.floor_light_color = Color(0.0, 1.0, 0.39)
-	z0.floor_light_energy = 7.0
-	z0.floor_volumetric_energy = 16.0
+	z0.color = Color(0.0, 1.0, 1.0)
+	z0.energy = 7.0
+	z0.volumetric_energy = 10.0
 
 	var z1 := ZoneData.new()
-	z1.ceiling_light_color = Color(0.0, 0.55, 0.75)
-	z1.ceiling_light_energy = 5.0
-	z1.ceiling_volumetric_energy = 4.0
-	z1.floor_light_color = Color(0.0, 0.45, 0.3)
-	z1.floor_light_energy = 5.0
-	z1.floor_volumetric_energy = 12.0
+	z1.color = Color(0.0, 0.6, 0.5)
+	z1.energy = 5.0
+	z1.volumetric_energy = 8.0
 
 	var z2 := ZoneData.new()
-	z2.ceiling_light_color = Color(0.0, 0.25, 0.45)
-	z2.ceiling_light_energy = 3.0
-	z2.ceiling_volumetric_energy = 2.5
-	z2.floor_light_color = Color(0.0, 0.2, 0.2)
-	z2.floor_light_energy = 3.0
-	z2.floor_volumetric_energy = 8.0
+	z2.color = Color(0.0, 0.2, 0.5)
+	z2.energy = 3.0
+	z2.volumetric_energy = 6.0
 
 	var z3 := ZoneData.new()
-	z3.ceiling_light_color = Color(0.02, 0.06, 0.18)
-	z3.ceiling_light_energy = 1.5
-	z3.ceiling_volumetric_energy = 1.2
-	z3.floor_light_color = Color(0.06, 0.0, 0.12)
-	z3.floor_light_energy = 2.0
-	z3.floor_volumetric_energy = 5.0
+	z3.color = Color(0.05, 0.02, 0.15)
+	z3.energy = 1.5
+	z3.volumetric_energy = 4.0
 
 	var z4 := ZoneData.new()
-	z4.ceiling_light_color = Color(0.01, 0.01, 0.06)
-	z4.ceiling_light_energy = 0.5
-	z4.ceiling_volumetric_energy = 0.5
-	z4.floor_light_color = Color(0.12, 0.0, 0.06)
-	z4.floor_light_energy = 1.5
-	z4.floor_volumetric_energy = 3.0
+	z4.color = Color(0.08, 0.0, 0.04)
+	z4.energy = 0.8
+	z4.volumetric_energy = 2.0
 
 	zones = [z0, z1, z2, z3, z4]
 
@@ -90,10 +74,13 @@ func _update_zone() -> void:
 	var cur: ZoneData = zones[idx]
 	var nxt: ZoneData = zones[next_idx]
 
-	ceiling_light.light_color = cur.ceiling_light_color.lerp(nxt.ceiling_light_color, blend)
-	ceiling_light.light_energy = lerpf(cur.ceiling_light_energy, nxt.ceiling_light_energy, blend)
-	ceiling_light.light_volumetric_fog_energy = lerpf(cur.ceiling_volumetric_energy, nxt.ceiling_volumetric_energy, blend)
+	var ceiling_t := clampf(blend * 2.0, 0.0, 1.0)
+	var floor_t := clampf(blend * 2.0 - 1.0, 0.0, 1.0)
 
-	floor_light.light_color = cur.floor_light_color.lerp(nxt.floor_light_color, blend)
-	floor_light.light_energy = lerpf(cur.floor_light_energy, nxt.floor_light_energy, blend)
-	floor_light.light_volumetric_fog_energy = lerpf(cur.floor_volumetric_energy, nxt.floor_volumetric_energy, blend)
+	ceiling_light.light_color = cur.color.lerp(nxt.color, ceiling_t)
+	ceiling_light.light_energy = lerpf(cur.energy, nxt.energy, ceiling_t)
+	ceiling_light.light_volumetric_fog_energy = lerpf(cur.volumetric_energy, nxt.volumetric_energy, ceiling_t)
+
+	floor_light.light_color = cur.color.lerp(nxt.color, floor_t)
+	floor_light.light_energy = lerpf(cur.energy, nxt.energy, floor_t)
+	floor_light.light_volumetric_fog_energy = lerpf(cur.volumetric_energy, nxt.volumetric_energy, floor_t)

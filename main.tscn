@@ -6,27 +6,29 @@
 [ext_resource type="Script" uid="uid://bcikgc1xip6lm" path="res://zone_data.gd" id="2_lquwl"]
 [ext_resource type="PackedScene" uid="uid://cdfyqopqwscdq" path="res://wader.tscn" id="4_1bvp3"]
 
+[sub_resource type="Resource" id="Resource_lquwl"]
+script = ExtResource("2_lquwl")
+color = Color(1, 0, 0.016666412, 1)
+metadata/_custom_type_script = "uid://bcikgc1xip6lm"
+
 [sub_resource type="Resource" id="Resource_7mycd"]
 script = ExtResource("2_lquwl")
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_272bh"]
 script = ExtResource("2_lquwl")
+color = Color(0, 0.5087692, 0.5087693, 1)
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_5vw27"]
 script = ExtResource("2_lquwl")
+color = Color(8.4228816e-08, 0.15396988, 0.15396994, 1)
+energy = 40.0
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_kek77"]
 script = ExtResource("2_lquwl")
-floor_light_color = Color(0.9882353, 0, 0.09019608, 1)
-metadata/_custom_type_script = "uid://bcikgc1xip6lm"
-
-[sub_resource type="Resource" id="Resource_4c57u"]
-script = ExtResource("2_lquwl")
-ceiling_light_color = Color(0.988527, 0, 0.09073525, 1)
-floor_light_color = Color(0, 0, 0, 1)
+color = Color(0, 0, 0, 1)
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
@@ -55,7 +57,7 @@ script = ExtResource("1_h2yge")
 ior_far = 6.0
 ior_dist_max = 200.0
 ior_dist_min = 5.0
-zones = Array[ExtResource("2_lquwl")]([SubResource("Resource_7mycd"), SubResource("Resource_272bh"), SubResource("Resource_5vw27"), SubResource("Resource_kek77"), SubResource("Resource_4c57u")])
+zones = Array[ExtResource("2_lquwl")]([SubResource("Resource_lquwl"), SubResource("Resource_7mycd"), SubResource("Resource_272bh"), SubResource("Resource_5vw27"), SubResource("Resource_kek77")])
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
 oxygen_drain = 1.0
