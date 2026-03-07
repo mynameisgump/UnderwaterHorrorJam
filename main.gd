@@ -63,12 +63,10 @@ func _update_zone() -> void:
 
 	var depth := maxf(player.get_depth(), 0.0)
 	var progress := depth / zone_size
-	print(progress)
 	var idx := int(progress)
 	var blend := progress - float(idx)
 
 	idx = clampi(idx, 0, zones.size() - 1)
-	print(idx)
 	var next_idx := mini(idx + 1, zones.size() - 1)
 	if idx >= zones.size() - 1:
 		blend = 0.0

@@ -28,7 +28,9 @@ metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_kek77"]
 script = ExtResource("2_lquwl")
-color = Color(0, 0, 0, 1)
+color = Color(0.0885599, 0.0885599, 0.0885599, 1)
+energy = 30.0
+volumetric_energy = 30.0
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
@@ -48,7 +50,7 @@ fog_sun_scatter = 0.09
 fog_density = 0.8557
 fog_height_density = -9.0722
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.0809
+volumetric_fog_density = 0.01
 volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
 volumetric_fog_anisotropy = 0.42
 
