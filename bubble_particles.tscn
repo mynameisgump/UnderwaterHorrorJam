@@ -10,7 +10,6 @@ linear_accel_max = -2.2351742e-06
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_guquq"]
 transparency = 4
-blend_mode = 1
 albedo_color = Color(1, 1, 1, 0.15686275)
 
 [sub_resource type="SphereMesh" id="SphereMesh_guquq"]

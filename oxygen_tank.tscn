@@ -8,7 +8,7 @@ size = Vector3(0.4, 0.4, 0.4)
 [sub_resource type="StandardMaterial3D" id="Material_1"]
 albedo_color = Color(0.25, 0.25, 0.25, 1)
 emission_enabled = true
-emission = Color(1, 0, 0, 1)
+emission = Color(1.732707e-06, 0.74681336, 0.18696627, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_1"]
 size = Vector3(0.4, 0.4, 0.4)
@@ -26,7 +26,7 @@ shape = SubResource("BoxShape_1")
 
 [node name="BlinkLight" type="OmniLight3D" parent="." unique_id=68458518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
-light_color = Color(1, 0.4, 0.1, 1)
+light_color = Color(0, 0.74509805, 0.1882353, 1)
 light_energy = 13.398
 light_volumetric_fog_energy = 16.0
 omni_range = 200.0

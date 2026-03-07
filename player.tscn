@@ -32,11 +32,10 @@ shape = SubResource("CapsuleShape3D_sh265")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52273333, 0)
 
 [node name="SpotLight3D" type="SpotLight3D" parent="Camera3D" unique_id=1987938989]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3622061, -0.26471272)
 light_energy = 8.05
 light_volumetric_fog_energy = 10.664
 spot_range = 157.294
-spot_angle = 18.27
+spot_angle = 44.98
 
 [node name="Control" type="Control" parent="." unique_id=844650005]
 layout_mode = 3
