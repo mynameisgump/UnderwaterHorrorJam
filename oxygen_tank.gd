@@ -22,7 +22,7 @@ func _process(delta: float) -> void:
 	if _blink_timer >= blink_interval:
 		_blink_timer -= blink_interval
 		_light_on = not _light_on
-		mesh_mat.emission_enabled = not mesh_mat.emission_enabled;
+		mesh_mat.emission_enabled = _light_on;
 		blink_light.visible = _light_on
 
 func _on_body_entered(body: Node3D) -> void:

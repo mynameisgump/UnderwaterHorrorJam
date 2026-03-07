@@ -86,3 +86,4 @@ light_volumetric_fog_energy = 16.0
 
 [node name="Wader" parent="." unique_id=745295253 instance=ExtResource("4_1bvp3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 500, 0)
+visible = false
