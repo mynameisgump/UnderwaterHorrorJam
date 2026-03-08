@@ -26,6 +26,8 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 @export var mine_radius_min: float = 15.0
 ## Max horizontal scatter radius when spawning a mine.
 @export var mine_radius_max: float = 55.0
+## Minimum world-space distance between any two mine centres.
+@export var mine_min_separation: float = 14.0
 
 @export_group("Zones")
 @export var zone_size: float = 100.0
@@ -109,15 +111,19 @@ func _get_mine_count() -> int:
 	return get_tree().get_nodes_in_group("mines").size()
 
 func _spawn_mine() -> void:
-	var mine := MineScene.instantiate()
 	var angle := randf() * TAU
 	var dist := randf_range(mine_radius_min, mine_radius_max)
 	var vertical_offset := randf_range(50.0, 500.0)
-	mine.global_position = Vector3(
+	var spawn_pos := Vector3(
 		player.global_position.x + cos(angle) * dist,
 		player.global_position.y + vertical_offset,
 		player.global_position.z + sin(angle) * dist
 	)
+	for existing in get_tree().get_nodes_in_group("mines"):
+		if spawn_pos.distance_to((existing as Node3D).global_position) < mine_min_separation:
+			return
+	var mine := MineScene.instantiate()
+	mine.global_position = spawn_pos
 	add_child(mine)
 
 func _update_zone() -> void:

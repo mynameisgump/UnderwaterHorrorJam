@@ -4,7 +4,7 @@ class_name Mine
 @export var oxygen_damage: float = 70.0
 @export var arm_delay: float = 2.0
 @export var bob_speed: float = 0.65
-@export var bob_amplitude: float = 0.14
+@export var bob_amplitude: float = 1.8
 @export var pulse_speed: float = 1.4
 
 var _armed: bool = false
