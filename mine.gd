@@ -14,7 +14,6 @@ var _arm_timer: float = 0.0
 var _bob_time: float = 0.0
 var _base_y: float = 0.0
 
-@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 #@onready var light: OmniLight3D = $OmniLight3D
 
 func _ready() -> void:
@@ -56,8 +55,7 @@ func _detonate(player: PlayerController) -> void:
 	_exploded = true
 	set_deferred("monitoring", false)
 
-	if mesh_instance:
-		mesh_instance.visible = false
+
 	#if light:
 		#light.light_color = Color(1.0, 0.55, 0.05)
 		#light.light_energy = 25.0

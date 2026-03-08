@@ -3,18 +3,6 @@
 [ext_resource type="Script" uid="uid://djnqyegf7b6b2" path="res://mine.gd" id="1_mine"]
 [ext_resource type="PackedScene" uid="uid://kij6lkt1tul5" path="res://assets/mine/Mine.glb" id="2_i6hay"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_body"]
-radius = 5.0
-height = 10.0
-
-[sub_resource type="StandardMaterial3D" id="Material_body"]
-albedo_color = Color(0.1, 0.1, 0.16, 1)
-metallic = 1.0
-metallic_specular = 0.0
-emission_enabled = true
-emission = Color(0.44705653, 0.22138682, 0.14737937, 1)
-emission_energy_multiplier = 0.35
-
 [sub_resource type="SphereShape3D" id="SphereShape_trigger"]
 radius = 5.097763
 
@@ -38,10 +26,6 @@ height = 15.201407
 collision_layer = 2
 script = ExtResource("1_mine")
 knockback_force = 200.0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1056482382]
-mesh = SubResource("SphereMesh_body")
-surface_material_override/0 = SubResource("Material_body")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=752290813]
 shape = SubResource("SphereShape_trigger")

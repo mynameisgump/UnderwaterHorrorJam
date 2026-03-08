@@ -61,21 +61,8 @@ volumetric_fog_length = 80.0
 [node name="Main" type="Node3D" unique_id=1956158667]
 script = ExtResource("1_h2yge")
 ior_far = 6.0
-ior_close = null
 ior_dist_max = 200.0
 ior_dist_min = 5.0
-field_depth = null
-mine_sep_deep = null
-mine_sep_surface = null
-mine_density_bias = null
-cull_radius = null
-chunk_size = null
-load_radius = null
-mines_per_chunk = null
-chunks_per_frame = null
-tanks_per_chunk = null
-tank_min_clearance = null
-zone_size = null
 zones = Array[ExtResource("2_lquwl")]([SubResource("Resource_lquwl"), SubResource("Resource_7mycd"), SubResource("Resource_272bh"), SubResource("Resource_5vw27"), SubResource("Resource_kek77")])
 
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]

@@ -19,20 +19,21 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## Total depth of the minefield in metres. Player starts at the bottom.
 @export var field_depth: float = 500.0
 ## Minimum separation between mines at the deepest point.
-@export var mine_sep_deep: float = 30.0
+@export var mine_sep_deep: float = 20.0
 ## Minimum separation between mines near the surface (maze-like).
-@export var mine_sep_surface: float = 9.0
+@export var mine_sep_surface: float = 13.0
 ## Exponent that biases mine Y placement toward the surface.
 ## 1.0 = uniform; lower values cluster more mines near the surface.
 @export var mine_density_bias: float = 0.2
-## Radius around the player within which mines are active (process + physics).
-@export var cull_radius: float = 100.0
+## Radius around the player within which real Area3D mine nodes are active.
+## Mines outside this radius are rendered cheaply via MultiMesh.
+@export var cull_radius: float = 50.0
 
 @export_group("Chunk Streaming")
 ## Horizontal size of each procedural chunk (metres).
 @export var chunk_size: float = 60.0
 ## Distance from the player (XZ) within which chunks stay loaded.
-@export var load_radius: float = 200.0
+@export var load_radius: float = 100.0
 ## Target number of mines per chunk column.
 @export var mines_per_chunk: int = 300
 ## Maximum chunks to generate per frame to limit hitches.
@@ -50,17 +51,47 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## corresponds to one zone_size deeper.  Values blend linearly between entries.
 @export var zones: Array[ZoneData] = []
 
-var _mine_refs: Array[Mine] = []
-var _mine_grid: Dictionary = {}
-var _gen_cell_size: float
+# ── MultiMesh (inactive mine rendering) ──────────────────────────────────────
+# Inactive mines outside cull_radius are stored as MultiMesh instances —
+# a single draw call — instead of individual scene nodes.
+# Only mines inside cull_radius are real Area3D nodes with collision + process.
+
+const _MM_GROW_STEP: int = 2000
+
+var _mm_node: MultiMeshInstance3D
+var _mm: MultiMesh
+
+# Compact array: slot index -> gen_cell of the mine using that slot.
+# Slots 0.._mm_used_count-1 are all live (visible) mine entries.
+var _mm_data: Array[Vector3i] = []
+var _mm_used_count: int = 0
+
+# ── Mine records ──────────────────────────────────────────────────────────────
+# Key:   Vector3i gen_cell
+# Value: { pos: Vector3, bob_phase: float, mm_index: int, chunk_key: Vector2i }
+#   mm_index >= 0  → mine is a passive MultiMesh instance at that slot
+#   mm_index == -1 → mine is an active Area3D node (see _active_mines)
+var _mine_data: Dictionary = {}
+
+# Key: Vector3i cull_cell  →  Array[Vector3i] of gen_cells in that cell
 var _cull_grid: Dictionary = {}
-var _active_mines: Array[Mine] = []
+
+# Key: Vector2i chunk_key  →  Array[Vector3i] of gen_cells in that chunk
+var _loaded_chunks: Dictionary = {}
+
+# Active mine nodes (inside cull_radius)
+var _active_mines: Dictionary = {}   # Vector3i gen_cell -> Mine
+var _node_to_gencell: Dictionary = {}  # Mine -> Vector3i gen_cell (reverse lookup)
+
+# Conflict-detection grid (unchanged from original)
+var _mine_grid: Dictionary = {}  # Vector3i gen_cell -> Vector3 position
+var _gen_cell_size: float
+
 var _cull_tick: int = 0
 var _stream_tick: int = 0
 var _surfaced: bool = false
 var _surface_y: float
 var _bottom_y: float
-var _loaded_chunks: Dictionary = {}
 var _world_seed: int
 
 func _ready() -> void:
@@ -71,11 +102,79 @@ func _ready() -> void:
 	_surface_y = wader.global_position.y
 	_bottom_y = _surface_y - field_depth
 	_world_seed = randi()
+	_setup_multimesh()
 	_place_player_at_depth()
 	_stream_chunks(9999)
 
 func _place_player_at_depth() -> void:
 	player.global_position = Vector3(0.0, _bottom_y, 0.0)
+
+# ── MultiMesh setup ───────────────────────────────────────────────────────────
+
+func _setup_multimesh() -> void:
+	_mm_node = MultiMeshInstance3D.new()
+	add_child(_mm_node)
+
+	_mm = MultiMesh.new()
+	_mm.transform_format = MultiMesh.TRANSFORM_3D
+
+	# Pre-allocate enough capacity for all mines that can be loaded at once.
+	var chunk_radius := int(ceil(load_radius / chunk_size)) + 1
+	var max_chunks := (2 * chunk_radius + 1) * (2 * chunk_radius + 1)
+	var initial_capacity := max_chunks * mines_per_chunk + _MM_GROW_STEP
+	_mm.instance_count = initial_capacity
+	_mm.visible_instance_count = 0
+	_mm_data.resize(initial_capacity)
+
+	# Sphere mesh matching the mine visual, rendered in one draw call.
+	var sphere := SphereMesh.new()
+	sphere.radius = 5.0
+	sphere.height = 10.0
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.1, 0.1, 0.16, 1.0)
+	mat.metallic = 1.0
+	mat.metallic_specular = 0.0
+	mat.emission_enabled = true
+	mat.emission = Color(0.44705653, 0.22138682, 0.14737937, 1.0)
+	mat.emission_energy_multiplier = 0.35
+	sphere.material = mat
+	_mm.mesh = sphere
+
+	_mm_node.multimesh = _mm
+
+# Allocate a MultiMesh slot for a mine and return its index.
+func _mm_alloc(gen_cell: Vector3i, pos: Vector3) -> int:
+	var idx := _mm_used_count
+
+	if idx >= _mm.instance_count:
+		var new_cap := _mm.instance_count + _MM_GROW_STEP
+		_mm.instance_count = new_cap
+		_mm_data.resize(new_cap)
+
+	_mm.set_instance_transform(idx, Transform3D(Basis.IDENTITY, pos))
+	_mm_data[idx] = gen_cell
+	_mm_used_count += 1
+	_mm.visible_instance_count = _mm_used_count
+	return idx
+
+# Release a MultiMesh slot using a swap-with-last strategy to keep the
+# visible range compact and avoid any gaps.
+func _mm_release(idx: int) -> void:
+	if idx < 0 or idx >= _mm_used_count:
+		return
+
+	_mm_used_count -= 1
+
+	if idx != _mm_used_count:
+		# Overwrite the released slot with the last live entry.
+		var last_cell: Vector3i = _mm_data[_mm_used_count]
+		_mm_data[idx] = last_cell
+		if _mine_data.has(last_cell):
+			var last_pos: Vector3 = _mine_data[last_cell].pos
+			_mm.set_instance_transform(idx, Transform3D(Basis.IDENTITY, last_pos))
+			_mine_data[last_cell].mm_index = idx
+
+	_mm.visible_instance_count = _mm_used_count
 
 # ── Depth helpers ─────────────────────────────────────────────────────────────
 
@@ -121,7 +220,7 @@ func _mine_grid_has_conflict_radius(pos: Vector3, radius: float) -> bool:
 						return true
 	return false
 
-# ── Cull grid (large cells, size = cull_radius) ─────────────────────────────
+# ── Cull grid (large cells, size = cull_radius) ──────────────────────────────
 
 func _cull_cell(pos: Vector3) -> Vector3i:
 	return Vector3i(
@@ -130,11 +229,11 @@ func _cull_cell(pos: Vector3) -> Vector3i:
 		int(floor(pos.z / cull_radius))
 	)
 
-func _register_mine_cull(mine: Mine) -> void:
-	var cell := _cull_cell(mine.position)
+func _register_mine_cull(gen_cell: Vector3i, pos: Vector3) -> void:
+	var cell := _cull_cell(pos)
 	if not _cull_grid.has(cell):
 		_cull_grid[cell] = []
-	_cull_grid[cell].append(mine)
+	_cull_grid[cell].append(gen_cell)
 
 # ── Chunk streaming ───────────────────────────────────────────────────────────
 
@@ -175,8 +274,8 @@ func _generate_chunk(cx: int, cz: int) -> void:
 	if _loaded_chunks.has(key):
 		return
 
-	var chunk_nodes: Array[Node3D] = []
-	_loaded_chunks[key] = chunk_nodes
+	var chunk_gen_cells: Array[Vector3i] = []
+	_loaded_chunks[key] = chunk_gen_cells
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector2i(cx, cz)) ^ _world_seed
@@ -196,78 +295,154 @@ func _generate_chunk(cx: int, cz: int) -> void:
 		var local_sep := _separation_at_y(y)
 		if _mine_grid_has_conflict(candidate, local_sep):
 			continue
-		_mine_grid[_gen_cell(candidate)] = candidate
-		var mine := _spawn_mine_at(candidate)
-		chunk_nodes.append(mine)
-		placed += 1
 
-	#var tank_attempts := tanks_per_chunk * 10
-	#var tanks_placed := 0
-	#for _i in tank_attempts:
-		#if tanks_placed >= tanks_per_chunk:
-			#break
-		#var x := rng.randf_range(x_min, x_min + chunk_size)
-		#var z := rng.randf_range(z_min, z_min + chunk_size)
-		#var y := rng.randf_range(_bottom_y + 10.0, _surface_y - 10.0)
-		#var candidate := Vector3(x, y, z)
-		#if _mine_grid_has_conflict_radius(candidate, tank_min_clearance):
-			#continue
-		#var tank := OxygenTankScene.instantiate()
-		#tank.position = candidate
-		#tank.add_to_group("oxygen_tanks")
-		#add_child(tank)
-		#chunk_nodes.append(tank)
-		#tanks_placed += 1
+		var gen_cell := _gen_cell(candidate)
+		var bob_phase := rng.randf() * TAU
+		_mine_grid[gen_cell] = candidate
+		var mm_idx := _mm_alloc(gen_cell, candidate)
+		_mine_data[gen_cell] = {
+			"pos": candidate,
+			"bob_phase": bob_phase,
+			"mm_index": mm_idx,
+			"chunk_key": key,
+		}
+		_register_mine_cull(gen_cell, candidate)
+		chunk_gen_cells.append(gen_cell)
+		placed += 1
 
 func _unload_chunk(key: Vector2i) -> void:
 	if not _loaded_chunks.has(key):
 		return
-	var nodes: Array = _loaded_chunks[key]
-	for node in nodes:
-		if is_instance_valid(node):
-			node.queue_free()
+	var gen_cells: Array = _loaded_chunks[key]
+	for gen_cell: Vector3i in gen_cells:
+		_remove_mine(gen_cell)
 	_loaded_chunks.erase(key)
 
-func _spawn_mine_at(pos: Vector3) -> Mine:
+# Fully remove a mine — whether it's a passive MultiMesh entry or an active node.
+func _remove_mine(gen_cell: Vector3i) -> void:
+	if not _mine_data.has(gen_cell):
+		return
+	var record: Dictionary = _mine_data[gen_cell]
+
+	if _active_mines.has(gen_cell):
+		var mine: Mine = _active_mines[gen_cell]
+		_active_mines.erase(gen_cell)
+		# Erase reverse lookup before queue_free so _on_mine_exiting early-returns.
+		_node_to_gencell.erase(mine)
+		if is_instance_valid(mine):
+			mine.queue_free()
+	else:
+		_mm_release(record.mm_index)
+
+	var cull_key := _cull_cell(record.pos)
+	if _cull_grid.has(cull_key):
+		_cull_grid[cull_key].erase(gen_cell)
+		if _cull_grid[cull_key].is_empty():
+			_cull_grid.erase(cull_key)
+
+	_mine_grid.erase(gen_cell)
+	_mine_data.erase(gen_cell)
+
+# ── Activation / deactivation ─────────────────────────────────────────────────
+
+# Swap a MultiMesh entry for a real Area3D node when it enters cull range.
+func _activate_mine(gen_cell: Vector3i) -> void:
+	if not _mine_data.has(gen_cell) or _active_mines.has(gen_cell):
+		return
+
+	var record: Dictionary = _mine_data[gen_cell]
+
+	# Remove from MultiMesh; its slot is released back into the compact array.
+	_mm_release(record.mm_index)
+	record.mm_index = -1
+
 	var mine: Mine = MineScene.instantiate()
-	mine.position = pos
+	mine.position = record.pos
 	mine.set_active(false)
 	add_child(mine)
-	_mine_refs.append(mine)
-	_register_mine_cull(mine)
-	mine.tree_exiting.connect(_on_mine_exiting.bind(mine))
-	return mine
+	# Override the random bob phase from _ready() with our seeded value so mines
+	# that re-enter the cull radius don't visibly "reset" their bob cycle.
+	mine._bob_time = record.bob_phase
+	mine.set_active(true)
 
-func _on_mine_exiting(mine: Mine) -> void:
-	_mine_refs.erase(mine)
-	_active_mines.erase(mine)
-	_mine_grid.erase(_gen_cell(mine.position))
-	var cull_key := _cull_cell(mine.position)
-	if _cull_grid.has(cull_key):
-		_cull_grid[cull_key].erase(mine)
+	_active_mines[gen_cell] = mine
+	_node_to_gencell[mine] = gen_cell
+	mine.tree_exiting.connect(_on_mine_exiting.bind(mine))
+
+# Swap a real node back to a passive MultiMesh entry when it leaves cull range.
+func _deactivate_mine(gen_cell: Vector3i) -> void:
+	if not _active_mines.has(gen_cell):
+		return
+
+	var mine: Mine = _active_mines[gen_cell]
+	var record: Dictionary = _mine_data[gen_cell]
+
+	_active_mines.erase(gen_cell)
+	# Erase reverse lookup before queue_free so _on_mine_exiting early-returns.
+	_node_to_gencell.erase(mine)
+
+	if is_instance_valid(mine):
+		# Save current bob phase so the mine picks up visually where it left off
+		# when it eventually re-enters the cull radius.
+		record.bob_phase = mine._bob_time
+		mine.queue_free()
+
+	var mm_idx := _mm_alloc(gen_cell, record.pos)
+	record.mm_index = mm_idx
 
 # ── Culling ───────────────────────────────────────────────────────────────────
 
 func _cull_mines() -> void:
 	var player_pos := player.global_position
 	var cull_sq := cull_radius * cull_radius
+
+	# Deactivate mines that have drifted out of range.
+	var to_deactivate: Array[Vector3i] = []
+	for gen_cell: Vector3i in _active_mines:
+		if not _mine_data.has(gen_cell):
+			to_deactivate.append(gen_cell)
+			continue
+		if (_mine_data[gen_cell].pos as Vector3).distance_squared_to(player_pos) > cull_sq:
+			to_deactivate.append(gen_cell)
+	for gen_cell in to_deactivate:
+		_deactivate_mine(gen_cell)
+
+	# Activate mines in neighbouring cull cells that are now in range.
 	var center := _cull_cell(player_pos)
-
-	for mine in _active_mines:
-		if is_instance_valid(mine):
-			mine.set_active(false)
-	_active_mines.clear()
-
 	for dx in range(-1, 2):
 		for dy in range(-1, 2):
 			for dz in range(-1, 2):
-				var key := Vector3i(center.x + dx, center.y + dy, center.z + dz)
-				if not _cull_grid.has(key):
+				var cell_key := Vector3i(center.x + dx, center.y + dy, center.z + dz)
+				if not _cull_grid.has(cell_key):
 					continue
-				for mine in _cull_grid[key]:
-					if is_instance_valid(mine) and mine.global_position.distance_squared_to(player_pos) <= cull_sq:
-						mine.set_active(true)
-						_active_mines.append(mine)
+				for gen_cell: Vector3i in _cull_grid[cell_key]:
+					if _active_mines.has(gen_cell) or not _mine_data.has(gen_cell):
+						continue
+					if (_mine_data[gen_cell].pos as Vector3).distance_squared_to(player_pos) <= cull_sq:
+						_activate_mine(gen_cell)
+
+# Called when a Mine node exits the tree (e.g. after exploding and queue_free-ing itself).
+func _on_mine_exiting(mine: Mine) -> void:
+	if not _node_to_gencell.has(mine):
+		return
+
+	var gen_cell: Vector3i = _node_to_gencell[mine]
+	_active_mines.erase(gen_cell)
+	_node_to_gencell.erase(mine)
+
+	if not _mine_data.has(gen_cell):
+		return
+	var record: Dictionary = _mine_data[gen_cell]
+
+	# Mine exploded: just tear it down entirely, no MultiMesh restore.
+	var cull_key := _cull_cell(record.pos)
+	if _cull_grid.has(cull_key):
+		_cull_grid[cull_key].erase(gen_cell)
+		if _cull_grid[cull_key].is_empty():
+			_cull_grid.erase(cull_key)
+
+	_mine_grid.erase(gen_cell)
+	_mine_data.erase(gen_cell)
 
 # ── Debug input ───────────────────────────────────────────────────────────────
 
