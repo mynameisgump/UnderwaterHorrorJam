@@ -2,6 +2,7 @@ extends Area3D
 class_name Mine
 
 @export var oxygen_damage: float = 70.0
+@export var knockback_force: float = 28.0
 @export var arm_delay: float = 2.0
 @export var bob_speed: float = 0.65
 @export var bob_amplitude: float = 1.8
@@ -55,6 +56,10 @@ func _detonate(player: PlayerController) -> void:
 		light.light_color = Color(1.0, 0.55, 0.05)
 		light.light_energy = 25.0
 
+	var blast_dir := (player.global_position - global_position)
+	if blast_dir.length_squared() < 0.001:
+		blast_dir = Vector3.UP
+	player.apply_knockback(blast_dir.normalized() * knockback_force)
 	player.damage_oxygen(oxygen_damage)
 
 	await get_tree().create_timer(0.3).timeout

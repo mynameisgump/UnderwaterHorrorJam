@@ -36,6 +36,11 @@ var current_oxygen: float
 var _dash_timer: float = 0.0
 var _acclimated_depth: float = 0.0
 var _at_bends_risk: bool = false
+var _knockback_timer: float = 0.0
+var _shake_time: float = 0.0
+var _shake_mag: float = 0.0
+
+const _SHAKE_DURATION: float = 0.55
 
 @onready var camera: Camera3D = $Camera3D
 @onready var oxy_label: Label = $Control/OxyLabel
@@ -64,8 +69,24 @@ func get_safe_ceiling() -> float:
 func get_safe_floor() -> float:
 	return _acclimated_depth + safe_descent_limit
 
-func _process(_delta: float) -> void:
+func apply_knockback(impulse: Vector3) -> void:
+	velocity += impulse
+	_knockback_timer = 0.7
+	_shake_mag = 0.06
+	_shake_time = _SHAKE_DURATION
+
+func _process(delta: float) -> void:
 	_update_ui()
+	if _shake_time > 0.0:
+		_shake_time -= delta
+		var t := _shake_time / _SHAKE_DURATION
+		camera.position = Vector3(
+			randf_range(-1.0, 1.0) * _shake_mag * t,
+			randf_range(-1.0, 1.0) * _shake_mag * t,
+			0.0
+		)
+	else:
+		camera.position = Vector3.ZERO
 
 func _update_ui() -> void:
 	oxy_label.text = "O2  %.0f%%" % ((current_oxygen / max_oxygen) * 100.0)
@@ -121,6 +142,8 @@ func damage_oxygen(amount: float) -> void:
 func _physics_process(delta: float) -> void:
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
+	if _knockback_timer > 0.0:
+		_knockback_timer -= delta
 
 	current_oxygen = maxf(current_oxygen - oxygen_drain * delta, 0.0)
 	oxygen_changed.emit(current_oxygen, max_oxygen)
@@ -151,7 +174,7 @@ func _physics_process(delta: float) -> void:
 	velocity *= 1.0 - drag * delta
 
 	var speed: float = velocity.length()
-	if speed > swim_speed and _dash_timer <= 0.0:
+	if speed > swim_speed and _dash_timer <= 0.0 and _knockback_timer <= 0.0:
 		velocity = velocity.normalized() * swim_speed
 
 	move_and_slide()

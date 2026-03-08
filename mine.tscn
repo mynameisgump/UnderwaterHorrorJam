@@ -21,6 +21,7 @@ radius = 5.097763
 [node name="Mine" type="Area3D" unique_id=295821135]
 collision_layer = 2
 script = ExtResource("1_mine")
+knockback_force = 100.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1056482382]
 mesh = SubResource("SphereMesh_body")
