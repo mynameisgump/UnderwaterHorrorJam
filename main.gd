@@ -21,11 +21,14 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## Horizontal radius of the mine column.
 @export var field_radius: float = 80.0
 ## Total number of mines to generate.
-@export var mine_count: int = 600
+@export var mine_count: int = 5000
 ## Minimum world-space distance between any two mine centres.
-@export var mine_min_separation: float = 14.0
+@export var mine_min_separation: float = 10.0
+## Exponent that biases mine Y placement toward the surface.
+## 1.0 = uniform; lower values cluster more mines near the surface.
+@export var mine_density_bias: float = 0.2
 ## Radius around the player within which mines are active (process + physics).
-@export var cull_radius: float = 120.0
+@export var cull_radius: float = 50.0
 
 @export_group("Oxygen Tanks")
 ## Total number of oxygen tanks to scatter through the field.
@@ -78,7 +81,7 @@ func _mine_grid_has_conflict(pos: Vector3) -> bool:
 func _generate_minefield() -> void:
 	var surface_y := wader.global_position.y
 	var bottom_y := surface_y - field_depth
-	var max_attempts := mine_count * 10
+	var max_attempts := mine_count * 30
 
 	# Scatter mines throughout the full water column.
 	for _i in max_attempts:
@@ -88,7 +91,7 @@ func _generate_minefield() -> void:
 		var dist := randf_range(0.0, field_radius)
 		var candidate := Vector3(
 			cos(angle) * dist,
-			randf_range(bottom_y + 10.0, surface_y - 10.0),
+			lerp(bottom_y + 10.0, surface_y - 10.0, pow(randf(), mine_density_bias)),
 			sin(angle) * dist
 		)
 		if _mine_grid_has_conflict(candidate):

@@ -13,16 +13,17 @@ metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_7mycd"]
 script = ExtResource("2_lquwl")
+color = Color(0, 0.1826362, 0.18263617, 1)
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_272bh"]
 script = ExtResource("2_lquwl")
-color = Color(0, 0.5087692, 0.5087693, 1)
+color = Color(0, 0, 0, 1)
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
 [sub_resource type="Resource" id="Resource_5vw27"]
 script = ExtResource("2_lquwl")
-color = Color(8.4228816e-08, 0.15396988, 0.15396994, 1)
+color = Color(0, 0, 0, 1)
 energy = 40.0
 metadata/_custom_type_script = "uid://bcikgc1xip6lm"
 
