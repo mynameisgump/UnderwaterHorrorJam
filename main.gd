@@ -23,11 +23,19 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## Maximum number of live mines allowed at once.
 @export var mine_max_count: int = 1000
 ## Min horizontal scatter radius when spawning a mine.
-@export var mine_radius_min: float = 15.0
+@export var mine_radius_min: float = 0.0
 ## Max horizontal scatter radius when spawning a mine.
 @export var mine_radius_max: float = 55.0
 ## Minimum world-space distance between any two mine centres.
 @export var mine_min_separation: float = 14.0
+
+@export_group("Oxygen Tanks")
+## How many tanks to attempt to spawn per mine batch.
+@export var tanks_per_batch: int = 3
+## Minimum distance a tank must keep from any mine or other tank.
+@export var tank_min_clearance: float = 18.0
+## Maximum number of live tanks allowed at once.
+@export var tank_max_count: int = 30
 
 @export_group("Zones")
 @export var zone_size: float = 100.0
@@ -106,9 +114,17 @@ func _tick_mine_spawner(delta: float) -> void:
 		if _get_mine_count() >= mine_max_count:
 			break
 		_spawn_mine()
+	var tanks_to_try := tanks_per_batch
+	for i in tanks_to_try:
+		if _get_tank_count() >= tank_max_count:
+			break
+		_spawn_tank()
 
 func _get_mine_count() -> int:
 	return get_tree().get_nodes_in_group("mines").size()
+
+func _get_tank_count() -> int:
+	return get_tree().get_nodes_in_group("oxygen_tanks").size()
 
 func _spawn_mine() -> void:
 	var angle := randf() * TAU
@@ -125,6 +141,26 @@ func _spawn_mine() -> void:
 	var mine := MineScene.instantiate()
 	mine.global_position = spawn_pos
 	add_child(mine)
+
+func _spawn_tank() -> void:
+	var angle := randf() * TAU
+	var dist := randf_range(mine_radius_min, mine_radius_max)
+	var vertical_offset := randf_range(50.0, 500.0)
+	var spawn_pos := Vector3(
+		player.global_position.x + cos(angle) * dist,
+		player.global_position.y + vertical_offset,
+		player.global_position.z + sin(angle) * dist
+	)
+	for mine in get_tree().get_nodes_in_group("mines"):
+		if spawn_pos.distance_to((mine as Node3D).global_position) < tank_min_clearance:
+			return
+	for tank in get_tree().get_nodes_in_group("oxygen_tanks"):
+		if spawn_pos.distance_to((tank as Node3D).global_position) < tank_min_clearance:
+			return
+	var tank := OxygenTankScene.instantiate()
+	tank.global_position = spawn_pos
+	tank.add_to_group("oxygen_tanks")
+	add_child(tank)
 
 func _update_zone() -> void:
 	if zones.size() < 2:

@@ -18,6 +18,10 @@ emission_energy_multiplier = 0.35
 [sub_resource type="SphereShape3D" id="SphereShape_trigger"]
 radius = 5.097763
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i6hay"]
+radius = 0.5678711
+height = 4.054182
+
 [node name="Mine" type="Area3D" unique_id=295821135]
 collision_layer = 2
 script = ExtResource("1_mine")
@@ -38,3 +42,51 @@ omni_range = 8.0
 
 [node name="Mine2" parent="." unique_id=389057579 instance=ExtResource("2_i6hay")]
 transform = Transform3D(6.11, 0, 0, 0, 6.11, 0, 0, 0, 6.11, 0, -0.06161499, 0)
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="." unique_id=1683014241]
+transform = Transform3D(0.65342486, 0.75152904, -0.090774775, 0.13760012, -4.371139e-08, 0.9904879, 0.7443804, -0.65970004, -0.10341052, 4.5542893, -0.6428485, -3.7118328)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="." unique_id=1205932038]
+transform = Transform3D(0.02477162, 0.74736583, 0.6639509, 0.025912384, -0.66441154, 0.74691767, 0.99935734, -0.0012979582, -0.03582462, 4.1634736, -4.3286724, -0.08343506)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="." unique_id=1466042380]
+transform = Transform3D(0.9986313, 0.05116417, 0.010867599, 0.034705512, -0.8035916, 0.5941684, 0.03913335, -0.5929778, -0.8042674, 0.017794013, -4.42679, -4.0500107)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="." unique_id=1989018511]
+transform = Transform3D(-0.008943246, -0.6506973, -0.7592846, 0.02493316, -0.75922394, 0.6503519, -0.9996492, -0.013114961, 0.02301391, -3.9894755, -4.4755845, 0.040612817)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D6" type="CollisionShape3D" parent="." unique_id=456642785]
+transform = Transform3D(-0.9994764, -0.002732618, 0.032243356, 0.025912382, -0.66441154, 0.74691767, 0.01938168, 0.74736196, 0.66413444, 0.01687479, -4.344505, 4.0957055)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D7" type="CollisionShape3D" parent="." unique_id=1622245599]
+transform = Transform3D(0.6659342, 0.74587595, 0.014166467, 0.035712343, -0.05084113, 0.9980683, 0.74515533, -0.66414183, -0.060493857, -4.503118, -0.6499984, 3.67274)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D8" type="CollisionShape3D" parent="." unique_id=285893532]
+transform = Transform3D(0.78072053, -0.6220296, -0.05962125, 0.03571234, -0.050841123, 0.9980682, -0.62385887, -0.7813415, -0.01747858, 3.7227073, -0.64377826, 4.397026)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D9" type="CollisionShape3D" parent="." unique_id=1407375204]
+transform = Transform3D(0.78072053, -0.6220296, -0.05962125, 0.03571234, -0.050841123, 0.9980682, -0.62385887, -0.7813415, -0.01747858, -3.537773, -0.6472855, -4.3850965)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D10" type="CollisionShape3D" parent="." unique_id=117941348]
+transform = Transform3D(0.96823275, -0.006658412, -0.24996215, 0.1600115, 0.78467005, 0.59890646, 0.1921501, -0.6198774, 0.76080906, -0.1284725, 4.1674824, -3.8197026)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D11" type="CollisionShape3D" parent="." unique_id=1397465820]
+transform = Transform3D(0.12871866, -0.76627505, 0.6294871, 0.19126813, 0.6420322, 0.74243605, -0.9730613, 0.024835642, 0.22920571, -3.858066, 4.041761, -0.06942353)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D12" type="CollisionShape3D" parent="." unique_id=2027452297]
+transform = Transform3D(-0.975619, 0.041412316, 0.21552962, 0.19126813, 0.6420322, 0.74243605, -0.10763104, 0.76555806, -0.6342998, 0.11592388, 4.1181154, 3.844031)
+shape = SubResource("CapsuleShape3D_i6hay")
+
+[node name="CollisionShape3D13" type="CollisionShape3D" parent="." unique_id=131026372]
+transform = Transform3D(-0.12859197, 0.65865535, -0.74137515, 0.17372642, 0.7509827, 0.63705885, 0.9763622, -0.046876013, -0.21099639, 3.7399647, 4.1094346, 0.05184744)
+shape = SubResource("CapsuleShape3D_i6hay")
