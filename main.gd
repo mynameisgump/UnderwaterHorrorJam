@@ -18,21 +18,29 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 @export_group("Minefield")
 ## Total depth of the minefield in metres. Player starts at the bottom.
 @export var field_depth: float = 500.0
-## Horizontal radius of the mine column.
-@export var field_radius: float = 80.0
-## Total number of mines to generate.
-@export var mine_count: int = 5000
-## Minimum world-space distance between any two mine centres.
-@export var mine_min_separation: float = 10.0
+## Minimum separation between mines at the deepest point.
+@export var mine_sep_deep: float = 30.0
+## Minimum separation between mines near the surface (maze-like).
+@export var mine_sep_surface: float = 9.0
 ## Exponent that biases mine Y placement toward the surface.
 ## 1.0 = uniform; lower values cluster more mines near the surface.
 @export var mine_density_bias: float = 0.2
 ## Radius around the player within which mines are active (process + physics).
-@export var cull_radius: float = 50.0
+@export var cull_radius: float = 100.0
+
+@export_group("Chunk Streaming")
+## Horizontal size of each procedural chunk (metres).
+@export var chunk_size: float = 60.0
+## Distance from the player (XZ) within which chunks stay loaded.
+@export var load_radius: float = 200.0
+## Target number of mines per chunk column.
+@export var mines_per_chunk: int = 300
+## Maximum chunks to generate per frame to limit hitches.
+@export var chunks_per_frame: int = 2
 
 @export_group("Oxygen Tanks")
-## Total number of oxygen tanks to scatter through the field.
-@export var tank_count: int = 25
+## Target oxygen tanks per chunk column.
+@export var tanks_per_chunk: int = 2
 ## Minimum distance a tank must keep from any mine or other tank.
 @export var tank_min_clearance: float = 18.0
 
@@ -42,134 +50,224 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## corresponds to one zone_size deeper.  Values blend linearly between entries.
 @export var zones: Array[ZoneData] = []
 
-# Direct references to all mines — avoids group allocation each frame.
 var _mine_refs: Array[Mine] = []
-# Spatial hash for O(1) proximity checks during generation. Cell key = Vector3i.
 var _mine_grid: Dictionary = {}
-# Throttle cull pass to every 6 frames.
+var _gen_cell_size: float
+var _cull_grid: Dictionary = {}
+var _active_mines: Array[Mine] = []
 var _cull_tick: int = 0
+var _stream_tick: int = 0
 var _surfaced: bool = false
+var _surface_y: float
+var _bottom_y: float
+var _loaded_chunks: Dictionary = {}
+var _world_seed: int
 
 func _ready() -> void:
 	player.surface_node = wader
 	if zones.is_empty():
 		_build_default_zones()
+	_gen_cell_size = mine_sep_surface
+	_surface_y = wader.global_position.y
+	_bottom_y = _surface_y - field_depth
+	_world_seed = randi()
 	_place_player_at_depth()
-	_generate_minefield()
+	_stream_chunks(9999)
 
 func _place_player_at_depth() -> void:
-	player.global_position = Vector3(0.0, wader.global_position.y - field_depth, 0.0)
+	player.global_position = Vector3(0.0, _bottom_y, 0.0)
 
-# ── Minefield Generation ──────────────────────────────────────────────────────
+# ── Depth helpers ─────────────────────────────────────────────────────────────
 
-func _cell(pos: Vector3) -> Vector3i:
+func _height_t(y: float) -> float:
+	return clampf((y - _bottom_y) / (_surface_y - _bottom_y), 0.0, 1.0)
+
+func _separation_at_y(y: float) -> float:
+	return lerpf(mine_sep_deep, mine_sep_surface, _height_t(y))
+
+# ── Generation grid (small cells, size = mine_sep_surface) ───────────────────
+
+func _gen_cell(pos: Vector3) -> Vector3i:
 	return Vector3i(
-		int(floor(pos.x / mine_min_separation)),
-		int(floor(pos.y / mine_min_separation)),
-		int(floor(pos.z / mine_min_separation))
+		int(floor(pos.x / _gen_cell_size)),
+		int(floor(pos.y / _gen_cell_size)),
+		int(floor(pos.z / _gen_cell_size))
 	)
 
-func _mine_grid_has_conflict(pos: Vector3) -> bool:
-	var origin := _cell(pos)
-	for dx in range(-1, 2):
-		for dy in range(-1, 2):
-			for dz in range(-1, 2):
-				if _mine_grid.has(Vector3i(origin.x + dx, origin.y + dy, origin.z + dz)):
-					return true
-	return false
-
-func _generate_minefield() -> void:
-	var surface_y := wader.global_position.y
-	var bottom_y := surface_y - field_depth
-	var max_attempts := mine_count * 30
-
-	# Scatter mines throughout the full water column.
-	for _i in max_attempts:
-		if _mine_refs.size() >= mine_count:
-			break
-		var angle := randf() * TAU
-		var dist := randf_range(0.0, field_radius)
-		var candidate := Vector3(
-			cos(angle) * dist,
-			lerp(bottom_y + 10.0, surface_y - 10.0, pow(randf(), mine_density_bias)),
-			sin(angle) * dist
-		)
-		if _mine_grid_has_conflict(candidate):
-			continue
-		_mine_grid[_cell(candidate)] = true
-		_spawn_mine_at(candidate)
-
-	# Scatter oxygen tanks, keeping clear of mines.
-	var tank_grid: Dictionary = {}
-	var tank_attempts := tank_count * 10
-	var tanks_placed := 0
-	for _i in tank_attempts:
-		if tanks_placed >= tank_count:
-			break
-		var angle := randf() * TAU
-		var dist := randf_range(0.0, field_radius)
-		var candidate := Vector3(
-			cos(angle) * dist,
-			randf_range(bottom_y + 10.0, surface_y - 10.0),
-			sin(angle) * dist
-		)
-		# Check against mines using the mine grid.
-		if _mine_grid_has_conflict_radius(candidate, tank_min_clearance):
-			continue
-		# Check against other tanks.
-		var tank_cell := Vector3i(
-			int(floor(candidate.x / tank_min_clearance)),
-			int(floor(candidate.y / tank_min_clearance)),
-			int(floor(candidate.z / tank_min_clearance))
-		)
-		if _tank_grid_has_conflict(tank_grid, tank_cell):
-			continue
-		tank_grid[tank_cell] = true
-		var tank := OxygenTankScene.instantiate()
-		tank.position = candidate
-		tank.add_to_group("oxygen_tanks")
-		add_child(tank)
-		tanks_placed += 1
-
-func _mine_grid_has_conflict_radius(pos: Vector3, radius: float) -> bool:
-	# Check mine grid using the mine_min_separation cell size.
-	var mine_origin := _cell(pos)
-	var r := int(ceil(radius / mine_min_separation)) + 1
+func _mine_grid_has_conflict(pos: Vector3, sep: float) -> bool:
+	var origin := _gen_cell(pos)
+	var r := int(ceil(sep / _gen_cell_size))
 	for dx in range(-r, r + 1):
 		for dy in range(-r, r + 1):
 			for dz in range(-r, r + 1):
-				if _mine_grid.has(Vector3i(mine_origin.x + dx, mine_origin.y + dy, mine_origin.z + dz)):
-					return true
+				var key := Vector3i(origin.x + dx, origin.y + dy, origin.z + dz)
+				if _mine_grid.has(key):
+					var other_pos: Vector3 = _mine_grid[key]
+					var required := maxf(sep, _separation_at_y(other_pos.y))
+					if pos.distance_squared_to(other_pos) < required * required:
+						return true
 	return false
 
-func _tank_grid_has_conflict(grid: Dictionary, cell: Vector3i) -> bool:
-	for dx in range(-1, 2):
-		for dy in range(-1, 2):
-			for dz in range(-1, 2):
-				if grid.has(Vector3i(cell.x + dx, cell.y + dy, cell.z + dz)):
-					return true
+func _mine_grid_has_conflict_radius(pos: Vector3, radius: float) -> bool:
+	var origin := _gen_cell(pos)
+	var r := int(ceil(radius / _gen_cell_size)) + 1
+	var radius_sq := radius * radius
+	for dx in range(-r, r + 1):
+		for dy in range(-r, r + 1):
+			for dz in range(-r, r + 1):
+				var key := Vector3i(origin.x + dx, origin.y + dy, origin.z + dz)
+				if _mine_grid.has(key):
+					if pos.distance_squared_to(_mine_grid[key]) < radius_sq:
+						return true
 	return false
 
-func _spawn_mine_at(pos: Vector3) -> void:
+# ── Cull grid (large cells, size = cull_radius) ─────────────────────────────
+
+func _cull_cell(pos: Vector3) -> Vector3i:
+	return Vector3i(
+		int(floor(pos.x / cull_radius)),
+		int(floor(pos.y / cull_radius)),
+		int(floor(pos.z / cull_radius))
+	)
+
+func _register_mine_cull(mine: Mine) -> void:
+	var cell := _cull_cell(mine.position)
+	if not _cull_grid.has(cell):
+		_cull_grid[cell] = []
+	_cull_grid[cell].append(mine)
+
+# ── Chunk streaming ───────────────────────────────────────────────────────────
+
+func _stream_chunks(max_gen: int = chunks_per_frame) -> void:
+	var player_pos := player.global_position
+	var px := int(floor(player_pos.x / chunk_size))
+	var pz := int(floor(player_pos.z / chunk_size))
+	var r := int(ceil(load_radius / chunk_size))
+	var load_sq := load_radius * load_radius
+
+	var desired: Dictionary = {}
+	for cx in range(px - r, px + r + 1):
+		for cz in range(pz - r, pz + r + 1):
+			var center_x := (cx + 0.5) * chunk_size
+			var center_z := (cz + 0.5) * chunk_size
+			var dx := center_x - player_pos.x
+			var dz := center_z - player_pos.z
+			if dx * dx + dz * dz <= load_sq:
+				desired[Vector2i(cx, cz)] = true
+
+	var to_unload: Array[Vector2i] = []
+	for key: Vector2i in _loaded_chunks:
+		if not desired.has(key):
+			to_unload.append(key)
+	for key in to_unload:
+		_unload_chunk(key)
+
+	var generated := 0
+	for key: Vector2i in desired:
+		if generated >= max_gen:
+			break
+		if not _loaded_chunks.has(key):
+			_generate_chunk(key.x, key.y)
+			generated += 1
+
+func _generate_chunk(cx: int, cz: int) -> void:
+	var key := Vector2i(cx, cz)
+	if _loaded_chunks.has(key):
+		return
+
+	var chunk_nodes: Array[Node3D] = []
+	_loaded_chunks[key] = chunk_nodes
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector2i(cx, cz)) ^ _world_seed
+
+	var x_min := cx * chunk_size
+	var z_min := cz * chunk_size
+
+	var attempts := mines_per_chunk * 5
+	var placed := 0
+	for _i in attempts:
+		if placed >= mines_per_chunk:
+			break
+		var y := lerpf(_bottom_y + 10.0, _surface_y - 10.0, pow(rng.randf(), mine_density_bias))
+		var x := rng.randf_range(x_min, x_min + chunk_size)
+		var z := rng.randf_range(z_min, z_min + chunk_size)
+		var candidate := Vector3(x, y, z)
+		var local_sep := _separation_at_y(y)
+		if _mine_grid_has_conflict(candidate, local_sep):
+			continue
+		_mine_grid[_gen_cell(candidate)] = candidate
+		var mine := _spawn_mine_at(candidate)
+		chunk_nodes.append(mine)
+		placed += 1
+
+	#var tank_attempts := tanks_per_chunk * 10
+	#var tanks_placed := 0
+	#for _i in tank_attempts:
+		#if tanks_placed >= tanks_per_chunk:
+			#break
+		#var x := rng.randf_range(x_min, x_min + chunk_size)
+		#var z := rng.randf_range(z_min, z_min + chunk_size)
+		#var y := rng.randf_range(_bottom_y + 10.0, _surface_y - 10.0)
+		#var candidate := Vector3(x, y, z)
+		#if _mine_grid_has_conflict_radius(candidate, tank_min_clearance):
+			#continue
+		#var tank := OxygenTankScene.instantiate()
+		#tank.position = candidate
+		#tank.add_to_group("oxygen_tanks")
+		#add_child(tank)
+		#chunk_nodes.append(tank)
+		#tanks_placed += 1
+
+func _unload_chunk(key: Vector2i) -> void:
+	if not _loaded_chunks.has(key):
+		return
+	var nodes: Array = _loaded_chunks[key]
+	for node in nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_loaded_chunks.erase(key)
+
+func _spawn_mine_at(pos: Vector3) -> Mine:
 	var mine: Mine = MineScene.instantiate()
 	mine.position = pos
 	mine.set_active(false)
 	add_child(mine)
 	_mine_refs.append(mine)
+	_register_mine_cull(mine)
 	mine.tree_exiting.connect(_on_mine_exiting.bind(mine))
+	return mine
 
 func _on_mine_exiting(mine: Mine) -> void:
 	_mine_refs.erase(mine)
-	_mine_grid.erase(_cell(mine.position))
+	_active_mines.erase(mine)
+	_mine_grid.erase(_gen_cell(mine.position))
+	var cull_key := _cull_cell(mine.position)
+	if _cull_grid.has(cull_key):
+		_cull_grid[cull_key].erase(mine)
 
 # ── Culling ───────────────────────────────────────────────────────────────────
 
 func _cull_mines() -> void:
 	var player_pos := player.global_position
 	var cull_sq := cull_radius * cull_radius
-	for mine in _mine_refs:
+	var center := _cull_cell(player_pos)
+
+	for mine in _active_mines:
 		if is_instance_valid(mine):
-			mine.set_active(mine.global_position.distance_squared_to(player_pos) <= cull_sq)
+			mine.set_active(false)
+	_active_mines.clear()
+
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			for dz in range(-1, 2):
+				var key := Vector3i(center.x + dx, center.y + dy, center.z + dz)
+				if not _cull_grid.has(key):
+					continue
+				for mine in _cull_grid[key]:
+					if is_instance_valid(mine) and mine.global_position.distance_squared_to(player_pos) <= cull_sq:
+						mine.set_active(true)
+						_active_mines.append(mine)
 
 # ── Debug input ───────────────────────────────────────────────────────────────
 
@@ -194,6 +292,10 @@ func _process(_delta: float) -> void:
 	_cull_tick = (_cull_tick + 1) % 6
 	if _cull_tick == 0:
 		_cull_mines()
+
+	_stream_tick = (_stream_tick + 1) % 12
+	if _stream_tick == 0:
+		_stream_chunks()
 
 	_check_surfaced()
 

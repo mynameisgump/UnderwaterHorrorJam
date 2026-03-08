@@ -23,11 +23,12 @@ func _ready() -> void:
 	_base_y = position.y
 	_arm_timer = arm_delay
 
-## Toggle processing and collision detection. Called by the main scene culling pass.
+## Toggle processing, collision detection, and visibility. Called by the main scene culling pass.
 func set_active(active: bool) -> void:
 	set_process(active)
 	monitoring = active
 	monitorable = active
+	visible = active
 
 func _process(delta: float) -> void:
 	if _exploded:
