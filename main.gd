@@ -7,6 +7,7 @@ const OxygenTankScene: PackedScene = preload("res://oxygen_tank.tscn")
 @onready var water_mat: ShaderMaterial = $Wader/MeshInstance3D.get_surface_override_material(0) if $Wader/MeshInstance3D.get_surface_override_material(0) else $Wader/MeshInstance3D.mesh.material
 @onready var ceiling_light: DirectionalLight3D = $CeilingLight
 @onready var floor_light: DirectionalLight3D = $FloorLight
+@onready var ground_mesh: MeshInstance3D = $Ground
 
 @export var ior_far := 1.333
 @export var ior_close := 0.8
@@ -66,7 +67,12 @@ func _process(_delta: float) -> void:
 	var dist_to_surface := wader.global_position.y - player.global_position.y
 	var t := clampf((dist_to_surface - ior_dist_min) / (ior_dist_max - ior_dist_min), 0.0, 1.0)
 	#water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, t))
+	wader.position.x = player.position.x
+	wader.position.z = player.position.z
 	_update_zone()
+	if player.position.y > 100:
+		ground_mesh.visible = false
+		
 
 func _update_zone() -> void:
 	if zones.size() < 2:

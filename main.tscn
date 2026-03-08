@@ -54,7 +54,8 @@ fog_height_density = -9.0722
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.08
 volumetric_fog_albedo = Color(0.007843138, 0.050980393, 0.101960786, 1)
-volumetric_fog_anisotropy = 0.52
+volumetric_fog_anisotropy = 0.5
+volumetric_fog_length = 80.0
 
 [node name="Main" type="Node3D" unique_id=1956158667]
 script = ExtResource("1_h2yge")
@@ -66,7 +67,7 @@ zones = Array[ExtResource("2_lquwl")]([SubResource("Resource_lquwl"), SubResourc
 [node name="Player" parent="." unique_id=613900863 instance=ExtResource("1_ig7tw")]
 oxygen_drain = 1.0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1166447620]
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=1166447620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.166871, 0)
 mesh = SubResource("BoxMesh_0xm2m")
 
