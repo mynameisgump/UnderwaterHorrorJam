@@ -21,7 +21,7 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## Seconds between spawn attempts.
 @export var mine_spawn_interval: float = 8.0
 ## Maximum number of live mines allowed at once.
-@export var mine_max_count: int = 20
+@export var mine_max_count: int = 1000
 ## Min horizontal scatter radius when spawning a mine.
 @export var mine_radius_min: float = 15.0
 ## Max horizontal scatter radius when spawning a mine.
@@ -99,7 +99,7 @@ func _tick_mine_spawner(delta: float) -> void:
 	_mine_spawn_timer = mine_spawn_interval
 	if _get_mine_count() >= mine_max_count:
 		return
-	var batch := randi_range(1, 100)
+	var batch := randi_range(1, 10000)
 	for i in batch:
 		if _get_mine_count() >= mine_max_count:
 			break
@@ -112,7 +112,7 @@ func _spawn_mine() -> void:
 	var mine := MineScene.instantiate()
 	var angle := randf() * TAU
 	var dist := randf_range(mine_radius_min, mine_radius_max)
-	var vertical_offset := randf_range(-12.0, 4.0)
+	var vertical_offset := randf_range(50.0, 500.0)
 	mine.global_position = Vector3(
 		player.global_position.x + cos(angle) * dist,
 		player.global_position.y + vertical_offset,
