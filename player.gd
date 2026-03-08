@@ -115,6 +115,9 @@ func add_oxygen(amount: float) -> void:
 	current_oxygen = minf(current_oxygen + amount, max_oxygen)
 	oxygen_changed.emit(current_oxygen, max_oxygen)
 
+func damage_oxygen(amount: float) -> void:
+	_consume_oxygen(amount)
+
 func _physics_process(delta: float) -> void:
 	if _dash_timer > 0.0:
 		_dash_timer -= delta

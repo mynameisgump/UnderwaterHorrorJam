@@ -1,6 +1,7 @@
 extends Node3D
 
 const OxygenTankScene: PackedScene = preload("res://oxygen_tank.tscn")
+const MineScene: PackedScene = preload("res://mine.tscn")
 
 @onready var wader: Node3D = $Wader
 @onready var player: PlayerController = $Player
@@ -14,11 +15,25 @@ const OxygenTankScene: PackedScene = preload("res://oxygen_tank.tscn")
 @export var ior_dist_max := 150.0
 @export var ior_dist_min := 10.0
 
+@export_group("Mines")
+## Depth (metres) at which mines start spawning.
+@export var mine_spawn_depth: float = 100.0
+## Seconds between spawn attempts.
+@export var mine_spawn_interval: float = 8.0
+## Maximum number of live mines allowed at once.
+@export var mine_max_count: int = 20
+## Min horizontal scatter radius when spawning a mine.
+@export var mine_radius_min: float = 15.0
+## Max horizontal scatter radius when spawning a mine.
+@export var mine_radius_max: float = 55.0
+
 @export_group("Zones")
 @export var zone_size: float = 100.0
 ## Define colors/energies per zone. Index 0 = surface, each subsequent entry
 ## corresponds to one zone_size deeper.  Values blend linearly between entries.
 @export var zones: Array[ZoneData] = []
+
+var _mine_spawn_timer: float = 0.0
 
 func _ready() -> void:
 	player.surface_node = wader
@@ -63,16 +78,47 @@ func _input(event: InputEvent) -> void:
 		tank.global_position = player.global_position + offset
 		add_child(tank)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var dist_to_surface := wader.global_position.y - player.global_position.y
-	var t := clampf((dist_to_surface - ior_dist_min) / (ior_dist_max - ior_dist_min), 0.0, 1.0)
-	#water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, t))
+	var _t := clampf((dist_to_surface - ior_dist_min) / (ior_dist_max - ior_dist_min), 0.0, 1.0)
+	#water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, _t))
 	wader.position.x = player.position.x
 	wader.position.z = player.position.z
 	_update_zone()
 	if player.position.y > 100:
 		ground_mesh.visible = false
-		
+	_tick_mine_spawner(delta)
+
+
+func _tick_mine_spawner(delta: float) -> void:
+	if player.get_depth() < mine_spawn_depth:
+		return
+	_mine_spawn_timer -= delta
+	if _mine_spawn_timer > 0.0:
+		return
+	_mine_spawn_timer = mine_spawn_interval
+	if _get_mine_count() >= mine_max_count:
+		return
+	var batch := randi_range(1, 100)
+	for i in batch:
+		if _get_mine_count() >= mine_max_count:
+			break
+		_spawn_mine()
+
+func _get_mine_count() -> int:
+	return get_tree().get_nodes_in_group("mines").size()
+
+func _spawn_mine() -> void:
+	var mine := MineScene.instantiate()
+	var angle := randf() * TAU
+	var dist := randf_range(mine_radius_min, mine_radius_max)
+	var vertical_offset := randf_range(-12.0, 4.0)
+	mine.global_position = Vector3(
+		player.global_position.x + cos(angle) * dist,
+		player.global_position.y + vertical_offset,
+		player.global_position.z + sin(angle) * dist
+	)
+	add_child(mine)
 
 func _update_zone() -> void:
 	if zones.size() < 2:
