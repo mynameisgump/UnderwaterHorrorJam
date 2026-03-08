@@ -16,26 +16,17 @@ class_name PlayerController
 @export var max_oxygen: float = 100.0
 @export var oxygen_drain: float = 2.0
 
-@export_group("Depth & Decompression")
+@export_group("Depth")
 ## The node representing the water surface (e.g. Wader mesh).
 @export var surface_node: Node3D
-## Meters per second the acclimated depth shifts toward actual depth.
-@export var acclimation_rate: float = 2.0
-## How many meters above acclimated depth the player can safely ascend.
-@export var safe_ascent_limit: float = 15.0
-## How many meters below acclimated depth the player can safely descend.
-@export var safe_descent_limit: float = 30.0
 
 signal oxygen_changed(current: float, maximum: float)
-signal depth_changed(depth_m: float, acclimated_m: float, safe_ceil_m: float, safe_floor_m: float)
-signal bends_risk_changed(at_risk: bool)
+signal depth_changed(depth_m: float)
 
 const MOUSE_SENS: float = 0.002
 
 var current_oxygen: float
 var _dash_timer: float = 0.0
-var _acclimated_depth: float = 0.0
-var _at_bends_risk: bool = false
 var _knockback_timer: float = 0.0
 var _shake_time: float = 0.0
 var _shake_mag: float = 0.0
@@ -51,23 +42,11 @@ func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	current_oxygen = max_oxygen
 
-## Call this after surface_node has been assigned to seed acclimated depth correctly.
-func initialize_depth() -> void:
-	_acclimated_depth = get_depth()
-
 ## Returns depth in metres below the water surface. Positive = deeper.
 func get_depth() -> float:
 	if surface_node == null:
 		return -global_position.y
 	return surface_node.global_position.y - global_position.y
-
-## Shallowest depth the player can safely ascend to right now.
-func get_safe_ceiling() -> float:
-	return maxf(_acclimated_depth - safe_ascent_limit, 0.0)
-
-## Deepest depth the player can safely descend to right now.
-func get_safe_floor() -> float:
-	return _acclimated_depth + safe_descent_limit
 
 func apply_knockback(impulse: Vector3) -> void:
 	velocity += impulse
@@ -90,11 +69,7 @@ func _process(delta: float) -> void:
 
 func _update_ui() -> void:
 	oxy_label.text = "O2  %.0f%%" % ((current_oxygen / max_oxygen) * 100.0)
-	depth_meter.update_depth(
-		get_depth(), _acclimated_depth,
-		get_safe_ceiling(), get_safe_floor(),
-		_at_bends_risk
-	)
+	depth_meter.update_depth(get_depth())
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -148,9 +123,6 @@ func _physics_process(delta: float) -> void:
 	current_oxygen = maxf(current_oxygen - oxygen_drain * delta, 0.0)
 	oxygen_changed.emit(current_oxygen, max_oxygen)
 
-	_update_acclimation(delta)
-	_check_bends_risk()
-
 	var input_dir: Vector2 = Input.get_vector("move_l", "move_r", "move_f", "move_b")
 	var cam_basis: Basis = camera.global_transform.basis
 	var forward: Vector3 = -cam_basis.z
@@ -178,21 +150,4 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.normalized() * swim_speed
 
 	move_and_slide()
-	depth_changed.emit(get_depth(), _acclimated_depth, get_safe_ceiling(), get_safe_floor())
-
-## Slowly shifts acclimated depth toward actual depth, simulating nitrogen saturation.
-func _update_acclimation(delta: float) -> void:
-	var depth := get_depth()
-	var diff := depth - _acclimated_depth
-	var step := acclimation_rate * delta
-	if absf(diff) <= step:
-		_acclimated_depth = depth
-	else:
-		_acclimated_depth += signf(diff) * step
-
-## Emits bends_risk_changed when the player ascends above their safe ceiling.
-func _check_bends_risk() -> void:
-	var was_at_risk := _at_bends_risk
-	_at_bends_risk = get_depth() < get_safe_ceiling()
-	if _at_bends_risk != was_at_risk:
-		bends_risk_changed.emit(_at_bends_risk)
+	depth_changed.emit(get_depth())

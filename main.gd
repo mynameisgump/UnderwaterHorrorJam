@@ -47,7 +47,6 @@ var _mine_spawn_timer: float = 0.0
 
 func _ready() -> void:
 	player.surface_node = wader
-	player.initialize_depth()
 	if zones.is_empty():
 		_build_default_zones()
 
