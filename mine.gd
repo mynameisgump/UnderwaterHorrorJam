@@ -15,7 +15,7 @@ var _bob_time: float = 0.0
 var _base_y: float = 0.0
 
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
-@onready var light: OmniLight3D = $OmniLight3D
+#@onready var light: OmniLight3D = $OmniLight3D
 
 func _ready() -> void:
 	add_to_group("mines")
@@ -36,9 +36,9 @@ func _process(delta: float) -> void:
 	_bob_time += delta
 	position.y = _base_y + sin(_bob_time * bob_speed) * bob_amplitude
 
-	if light and _armed:
+	if _armed:
 		var pulse := sin(_bob_time * pulse_speed) * 0.5 + 0.5
-		light.light_energy = 0.4 + pulse * 2.0
+		#light.light_energy = 0.4 + pulse * 2.0
 
 func _on_body_entered(body: Node3D) -> void:
 	if _exploded or not _armed:
@@ -52,9 +52,9 @@ func _detonate(player: PlayerController) -> void:
 
 	if mesh_instance:
 		mesh_instance.visible = false
-	if light:
-		light.light_color = Color(1.0, 0.55, 0.05)
-		light.light_energy = 25.0
+	#if light:
+		#light.light_color = Color(1.0, 0.55, 0.05)
+		#light.light_energy = 25.0
 
 	var blast_dir := (player.global_position - global_position)
 	if blast_dir.length_squared() < 0.001:

@@ -139,7 +139,7 @@ func _spawn_mine() -> void:
 		if spawn_pos.distance_to((existing as Node3D).global_position) < mine_min_separation:
 			return
 	var mine := MineScene.instantiate()
-	mine.global_position = spawn_pos
+	mine.position = spawn_pos
 	add_child(mine)
 
 func _spawn_tank() -> void:
@@ -158,7 +158,7 @@ func _spawn_tank() -> void:
 		if spawn_pos.distance_to((tank as Node3D).global_position) < tank_min_clearance:
 			return
 	var tank := OxygenTankScene.instantiate()
-	tank.global_position = spawn_pos
+	tank.position = spawn_pos
 	tank.add_to_group("oxygen_tanks")
 	add_child(tank)
 

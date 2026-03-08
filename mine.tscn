@@ -25,7 +25,7 @@ height = 4.054182
 [node name="Mine" type="Area3D" unique_id=295821135]
 collision_layer = 2
 script = ExtResource("1_mine")
-knockback_force = 100.0
+knockback_force = 200.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1056482382]
 mesh = SubResource("SphereMesh_body")
@@ -33,12 +33,6 @@ surface_material_override/0 = SubResource("Material_body")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=752290813]
 shape = SubResource("SphereShape_trigger")
-
-[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=34643576]
-light_color = Color(1, 0.05, 0.05, 1)
-light_energy = 0.8
-light_volumetric_fog_energy = 8.0
-omni_range = 8.0
 
 [node name="Mine2" parent="." unique_id=389057579 instance=ExtResource("2_i6hay")]
 transform = Transform3D(6.11, 0, 0, 0, 6.11, 0, 0, 0, 6.11, 0, -0.06161499, 0)
