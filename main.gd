@@ -15,27 +15,23 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 @export var ior_dist_max := 150.0
 @export var ior_dist_min := 10.0
 
-@export_group("Mines")
-## Depth (metres) at which mines start spawning.
-@export var mine_spawn_depth: float = 100.0
-## Seconds between spawn attempts.
-@export var mine_spawn_interval: float = 8.0
-## Maximum number of live mines allowed at once.
-@export var mine_max_count: int = 1000
-## Min horizontal scatter radius when spawning a mine.
-@export var mine_radius_min: float = 0.0
-## Max horizontal scatter radius when spawning a mine.
-@export var mine_radius_max: float = 55.0
+@export_group("Minefield")
+## Total depth of the minefield in metres. Player starts at the bottom.
+@export var field_depth: float = 500.0
+## Horizontal radius of the mine column.
+@export var field_radius: float = 80.0
+## Total number of mines to generate.
+@export var mine_count: int = 600
 ## Minimum world-space distance between any two mine centres.
 @export var mine_min_separation: float = 14.0
+## Radius around the player within which mines are active (process + physics).
+@export var cull_radius: float = 120.0
 
 @export_group("Oxygen Tanks")
-## How many tanks to attempt to spawn per mine batch.
-@export var tanks_per_batch: int = 3
+## Total number of oxygen tanks to scatter through the field.
+@export var tank_count: int = 25
 ## Minimum distance a tank must keep from any mine or other tank.
 @export var tank_min_clearance: float = 18.0
-## Maximum number of live tanks allowed at once.
-@export var tank_max_count: int = 30
 
 @export_group("Zones")
 @export var zone_size: float = 100.0
@@ -43,12 +39,172 @@ const MineScene: PackedScene = preload("res://mine.tscn")
 ## corresponds to one zone_size deeper.  Values blend linearly between entries.
 @export var zones: Array[ZoneData] = []
 
-var _mine_spawn_timer: float = 0.0
+# Direct references to all mines — avoids group allocation each frame.
+var _mine_refs: Array[Mine] = []
+# Spatial hash for O(1) proximity checks during generation. Cell key = Vector3i.
+var _mine_grid: Dictionary = {}
+# Throttle cull pass to every 6 frames.
+var _cull_tick: int = 0
+var _surfaced: bool = false
 
 func _ready() -> void:
 	player.surface_node = wader
 	if zones.is_empty():
 		_build_default_zones()
+	_place_player_at_depth()
+	_generate_minefield()
+
+func _place_player_at_depth() -> void:
+	player.global_position = Vector3(0.0, wader.global_position.y - field_depth, 0.0)
+
+# ── Minefield Generation ──────────────────────────────────────────────────────
+
+func _cell(pos: Vector3) -> Vector3i:
+	return Vector3i(
+		int(floor(pos.x / mine_min_separation)),
+		int(floor(pos.y / mine_min_separation)),
+		int(floor(pos.z / mine_min_separation))
+	)
+
+func _mine_grid_has_conflict(pos: Vector3) -> bool:
+	var origin := _cell(pos)
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			for dz in range(-1, 2):
+				if _mine_grid.has(Vector3i(origin.x + dx, origin.y + dy, origin.z + dz)):
+					return true
+	return false
+
+func _generate_minefield() -> void:
+	var surface_y := wader.global_position.y
+	var bottom_y := surface_y - field_depth
+	var max_attempts := mine_count * 10
+
+	# Scatter mines throughout the full water column.
+	for _i in max_attempts:
+		if _mine_refs.size() >= mine_count:
+			break
+		var angle := randf() * TAU
+		var dist := randf_range(0.0, field_radius)
+		var candidate := Vector3(
+			cos(angle) * dist,
+			randf_range(bottom_y + 10.0, surface_y - 10.0),
+			sin(angle) * dist
+		)
+		if _mine_grid_has_conflict(candidate):
+			continue
+		_mine_grid[_cell(candidate)] = true
+		_spawn_mine_at(candidate)
+
+	# Scatter oxygen tanks, keeping clear of mines.
+	var tank_grid: Dictionary = {}
+	var tank_attempts := tank_count * 10
+	var tanks_placed := 0
+	for _i in tank_attempts:
+		if tanks_placed >= tank_count:
+			break
+		var angle := randf() * TAU
+		var dist := randf_range(0.0, field_radius)
+		var candidate := Vector3(
+			cos(angle) * dist,
+			randf_range(bottom_y + 10.0, surface_y - 10.0),
+			sin(angle) * dist
+		)
+		# Check against mines using the mine grid.
+		if _mine_grid_has_conflict_radius(candidate, tank_min_clearance):
+			continue
+		# Check against other tanks.
+		var tank_cell := Vector3i(
+			int(floor(candidate.x / tank_min_clearance)),
+			int(floor(candidate.y / tank_min_clearance)),
+			int(floor(candidate.z / tank_min_clearance))
+		)
+		if _tank_grid_has_conflict(tank_grid, tank_cell):
+			continue
+		tank_grid[tank_cell] = true
+		var tank := OxygenTankScene.instantiate()
+		tank.position = candidate
+		tank.add_to_group("oxygen_tanks")
+		add_child(tank)
+		tanks_placed += 1
+
+func _mine_grid_has_conflict_radius(pos: Vector3, radius: float) -> bool:
+	# Check mine grid using the mine_min_separation cell size.
+	var mine_origin := _cell(pos)
+	var r := int(ceil(radius / mine_min_separation)) + 1
+	for dx in range(-r, r + 1):
+		for dy in range(-r, r + 1):
+			for dz in range(-r, r + 1):
+				if _mine_grid.has(Vector3i(mine_origin.x + dx, mine_origin.y + dy, mine_origin.z + dz)):
+					return true
+	return false
+
+func _tank_grid_has_conflict(grid: Dictionary, cell: Vector3i) -> bool:
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			for dz in range(-1, 2):
+				if grid.has(Vector3i(cell.x + dx, cell.y + dy, cell.z + dz)):
+					return true
+	return false
+
+func _spawn_mine_at(pos: Vector3) -> void:
+	var mine: Mine = MineScene.instantiate()
+	mine.position = pos
+	mine.set_active(false)
+	add_child(mine)
+	_mine_refs.append(mine)
+	mine.tree_exiting.connect(_on_mine_exiting.bind(mine))
+
+func _on_mine_exiting(mine: Mine) -> void:
+	_mine_refs.erase(mine)
+	_mine_grid.erase(_cell(mine.position))
+
+# ── Culling ───────────────────────────────────────────────────────────────────
+
+func _cull_mines() -> void:
+	var player_pos := player.global_position
+	var cull_sq := cull_radius * cull_radius
+	for mine in _mine_refs:
+		if is_instance_valid(mine):
+			mine.set_active(mine.global_position.distance_squared_to(player_pos) <= cull_sq)
+
+# ── Debug input ───────────────────────────────────────────────────────────────
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("spawn_debug_tank"):
+		var tank := OxygenTankScene.instantiate()
+		var angle := randf() * TAU
+		var dist := randf_range(5.0, 20.0)
+		var offset := Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
+		tank.global_position = player.global_position + offset
+		add_child(tank)
+
+# ── Per-frame ─────────────────────────────────────────────────────────────────
+
+func _process(_delta: float) -> void:
+	wader.position.x = player.position.x
+	wader.position.z = player.position.z
+	_update_zone()
+	if player.position.y > 100:
+		ground_mesh.visible = false
+
+	_cull_tick = (_cull_tick + 1) % 6
+	if _cull_tick == 0:
+		_cull_mines()
+
+	_check_surfaced()
+
+func _check_surfaced() -> void:
+	if _surfaced:
+		return
+	if player.global_position.y >= wader.global_position.y - 5.0:
+		_surfaced = true
+		_on_player_surfaced()
+
+func _on_player_surfaced() -> void:
+	print("YOU SURFACED — YOU WIN")
+
+# ── Zone lighting ─────────────────────────────────────────────────────────────
 
 func _build_default_zones() -> void:
 	var z0 := ZoneData.new()
@@ -77,89 +233,6 @@ func _build_default_zones() -> void:
 	z4.volumetric_energy = 2.0
 
 	zones = [z0, z1, z2, z3, z4]
-
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("spawn_debug_tank"):
-		var tank := OxygenTankScene.instantiate()
-		var angle := randf() * TAU
-		var dist := randf_range(5.0, 20.0)
-		var offset := Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
-		tank.global_position = player.global_position + offset
-		add_child(tank)
-
-func _process(delta: float) -> void:
-	var dist_to_surface := wader.global_position.y - player.global_position.y
-	var _t := clampf((dist_to_surface - ior_dist_min) / (ior_dist_max - ior_dist_min), 0.0, 1.0)
-	#water_mat.set_shader_parameter("index_of_refraction", lerpf(ior_close, ior_far, _t))
-	wader.position.x = player.position.x
-	wader.position.z = player.position.z
-	_update_zone()
-	if player.position.y > 100:
-		ground_mesh.visible = false
-	_tick_mine_spawner(delta)
-
-
-func _tick_mine_spawner(delta: float) -> void:
-	if player.get_depth() < mine_spawn_depth:
-		return
-	_mine_spawn_timer -= delta
-	if _mine_spawn_timer > 0.0:
-		return
-	_mine_spawn_timer = mine_spawn_interval
-	if _get_mine_count() >= mine_max_count:
-		return
-	var batch := randi_range(1, 10000)
-	for i in batch:
-		if _get_mine_count() >= mine_max_count:
-			break
-		_spawn_mine()
-	var tanks_to_try := tanks_per_batch
-	for i in tanks_to_try:
-		if _get_tank_count() >= tank_max_count:
-			break
-		_spawn_tank()
-
-func _get_mine_count() -> int:
-	return get_tree().get_nodes_in_group("mines").size()
-
-func _get_tank_count() -> int:
-	return get_tree().get_nodes_in_group("oxygen_tanks").size()
-
-func _spawn_mine() -> void:
-	var angle := randf() * TAU
-	var dist := randf_range(mine_radius_min, mine_radius_max)
-	var vertical_offset := randf_range(50.0, 500.0)
-	var spawn_pos := Vector3(
-		player.global_position.x + cos(angle) * dist,
-		player.global_position.y + vertical_offset,
-		player.global_position.z + sin(angle) * dist
-	)
-	for existing in get_tree().get_nodes_in_group("mines"):
-		if spawn_pos.distance_to((existing as Node3D).global_position) < mine_min_separation:
-			return
-	var mine := MineScene.instantiate()
-	mine.position = spawn_pos
-	add_child(mine)
-
-func _spawn_tank() -> void:
-	var angle := randf() * TAU
-	var dist := randf_range(mine_radius_min, mine_radius_max)
-	var vertical_offset := randf_range(50.0, 500.0)
-	var spawn_pos := Vector3(
-		player.global_position.x + cos(angle) * dist,
-		player.global_position.y + vertical_offset,
-		player.global_position.z + sin(angle) * dist
-	)
-	for mine in get_tree().get_nodes_in_group("mines"):
-		if spawn_pos.distance_to((mine as Node3D).global_position) < tank_min_clearance:
-			return
-	for tank in get_tree().get_nodes_in_group("oxygen_tanks"):
-		if spawn_pos.distance_to((tank as Node3D).global_position) < tank_min_clearance:
-			return
-	var tank := OxygenTankScene.instantiate()
-	tank.position = spawn_pos
-	tank.add_to_group("oxygen_tanks")
-	add_child(tank)
 
 func _update_zone() -> void:
 	if zones.size() < 2:

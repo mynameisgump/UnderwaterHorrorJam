@@ -18,11 +18,16 @@ var _base_y: float = 0.0
 #@onready var light: OmniLight3D = $OmniLight3D
 
 func _ready() -> void:
-	add_to_group("mines")
 	body_entered.connect(_on_body_entered)
 	_bob_time = randf() * TAU
 	_base_y = position.y
 	_arm_timer = arm_delay
+
+## Toggle processing and collision detection. Called by the main scene culling pass.
+func set_active(active: bool) -> void:
+	set_process(active)
+	monitoring = active
+	monitorable = active
 
 func _process(delta: float) -> void:
 	if _exploded:
@@ -37,7 +42,7 @@ func _process(delta: float) -> void:
 	position.y = _base_y + sin(_bob_time * bob_speed) * bob_amplitude
 
 	if _armed:
-		var pulse := sin(_bob_time * pulse_speed) * 0.5 + 0.5
+		var _pulse := sin(_bob_time * pulse_speed) * 0.5 + 0.5
 		#light.light_energy = 0.4 + pulse * 2.0
 
 func _on_body_entered(body: Node3D) -> void:
